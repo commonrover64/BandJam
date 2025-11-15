@@ -1,17 +1,12 @@
 const mongoose = require("mongoose");
 
-const ownerSchema = new mongoose.Schema({
+const userSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
   },
   email: {
     type: String,
-    required: true,
-    unique: true,
-  },
-  phone: {
-    type: Number,
     required: true,
     unique: true,
   },
@@ -27,4 +22,4 @@ const ownerSchema = new mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model("owners", ownerSchema);
+module.exports = mongoose.model("users", userSchema);
