@@ -1,8 +1,24 @@
-import { Button, Form, Input } from "antd";
+import { Button, Form, Input, message } from "antd";
 import React from "react";
 import { Link } from "react-router-dom";
+import {RegisterUser} from "../api/user"
 
 const Register = () => {
+
+  const onFinish = async (values) => {
+
+    try {
+      const response = await RegisterUser(values)
+      if(response.success) {
+        message.success(response?.message)
+      }else {
+        message.warning(response?.message)
+      }
+    } catch (error) {
+      message.error(error)
+    }
+  };
+
   return (
     <div className="flex justify-center items-center h-screen bg-gradient-to-r from-gray-400 to-gray-700">
       <main>
@@ -11,7 +27,7 @@ const Register = () => {
         </section>
 
         <section>
-          <Form layout="vertical">
+          <Form layout="vertical" onFinish={onFinish}>
             <Form.Item
               label="Name"
               htmlFor="name"
@@ -25,7 +41,7 @@ const Register = () => {
               ></Input>
             </Form.Item>
             <Form.Item
-              label="Email"
+              label="Email" 
               name="email"
               htmlFor="email"
               rules={[{ required: true, message: "Email is required!" }]}
@@ -43,7 +59,7 @@ const Register = () => {
             </Form.Item>
 
             <Form.Item>
-              <Button type="primary" block htmlType="submit">
+              <Button type="primary" block htmlFor="submit" htmlType="submit">
                 Register
               </Button>
             </Form.Item>
@@ -55,7 +71,6 @@ const Register = () => {
             Already a User ? <Link to="/login">Login Here</Link>
           </p>
         </section>
-
       </main>
     </div>
   );

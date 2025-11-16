@@ -4,7 +4,7 @@ const registerUser = async (req, res, next) => {
   try {
     // check first user exist of not
     const userExist = await userModel.findOne({ email: req?.body?.email });
-    if (!userExist) {
+    if (userExist) {
       return res.send({
         success: false,
         message: "user already exist",
