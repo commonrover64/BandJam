@@ -5,7 +5,7 @@ const registerUser = async (req, res, next) => {
     // check first user exist of not
     const userExist = await userModel.findOne({ email: req?.body?.email });
     if (userExist) {
-      return res.send({
+      return res.status(409).send({
         success: false,
         message: "user already exist",
       });
@@ -13,7 +13,7 @@ const registerUser = async (req, res, next) => {
 
     const newUser = new userModel(req?.body);
     await newUser.save();
-    res.send({
+    res.status(200).send({
       success: true,
       message: "user successfully registered !",
     });
@@ -28,7 +28,7 @@ const loginUser = async (req, res, next) => {
     // check first user exist of not
     const userExist = await userModel.findOne({ email: req?.body?.email });
     if (!userExist) {
-      return res.send({
+      return res.status(404).send({
         success: false,
         message: "user does not exist!! Register please",
       });
@@ -36,13 +36,13 @@ const loginUser = async (req, res, next) => {
 
     // check password
     if(req?.body?.password !== userExist.password) {
-        return res.send({
+        return res.status(401).send({
             success: false,
             message: "Enter correct password"
         })
     }
 
-    res.send({
+    res.status(200).send({
         success: true,
         message: "Logged In sucessfully!"
     })

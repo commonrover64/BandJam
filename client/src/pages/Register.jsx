@@ -1,21 +1,26 @@
 import { Button, Form, Input, message } from "antd";
 import React from "react";
-import { Link } from "react-router-dom";
-import {RegisterUser} from "../api/user"
+import { Link, useNavigate } from "react-router-dom";
+import { RegisterUser } from "../api/user";
 
 const Register = () => {
+  const navigate = useNavigate();
 
   const onFinish = async (values) => {
-
     try {
-      const response = await RegisterUser(values)
-      if(response.success) {
-        message.success(response?.message)
-      }else {
-        message.warning(response?.message)
+      const response = await RegisterUser(values);
+      if (response.success) {
+        message.success(response?.message);
+
+        // navigate to login screen
+        setTimeout(() => {
+          navigate("/login");
+        }, 1500);
+      } else {
+        message.warning(response?.message);
       }
     } catch (error) {
-      message.error(error)
+      message.error(error);
     }
   };
 
@@ -41,7 +46,7 @@ const Register = () => {
               ></Input>
             </Form.Item>
             <Form.Item
-              label="Email" 
+              label="Email"
               name="email"
               htmlFor="email"
               rules={[{ required: true, message: "Email is required!" }]}
