@@ -1,4 +1,4 @@
-import { Button, Form, Input, message } from "antd";
+import { Button, Form, Input, message, Radio } from "antd";
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { RegisterUser } from "../api/user";
@@ -61,6 +61,29 @@ const Register = () => {
               rules={[{ required: true, message: "Password is required!" }]}
             >
               <Input.Password />
+            </Form.Item>
+
+            <Form.Item
+              label="Register as a Studio Owner ?"
+              htmlFor="role"
+              name="role"
+              initialValue={false}
+              rules={[{ required: true, message: "Please select an option" }]}
+            >
+              <Radio.Group
+                name="role"
+                initialValue={"user"}
+                options={[
+                  {
+                    value: "owner",
+                    label: "Yes",
+                  },
+                  {
+                    value: "user",
+                    label: "No",
+                  },
+                ]}
+              />
             </Form.Item>
 
             <Form.Item>

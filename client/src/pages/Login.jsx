@@ -14,6 +14,7 @@ const Login = () => {
 
         // navigate to home screen
         setTimeout(() => {
+          localStorage.setItem("tokenForBPR", response?.token);
           navigate("/");
         }, 1500);
       } else {
