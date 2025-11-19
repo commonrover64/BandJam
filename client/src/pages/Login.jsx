@@ -12,7 +12,6 @@ const Login = () => {
       if (response.success) {
         message.success(response?.message);
 
-        // navigate to home screen
         setTimeout(() => {
           localStorage.setItem("tokenForBPR", response?.token);
           navigate("/");
@@ -26,45 +25,61 @@ const Login = () => {
   };
 
   return (
-    <div className="flex justify-center items-center h-screen bg-gradient-to-r from-gray-400 to-gray-700">
-      <main>
-        <section>
-          <h1>Login to BandJam</h1>
-        </section>
+    <div className="flex justify-center items-center h-screen bg-gradient-to-r from-gray-400 to-gray-700 px-4">
+      {/* Tighter, cleaner card */}
+      <main className="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm">
+        {/* Title */}
+        <h1 className="text-2xl font-semibold text-center text-gray-800 mb-6">
+          Login to <span className="text-blue-600">BandJam</span>
+        </h1>
 
-        <section>
-          <Form layout="vertical" onFinish={onFinish}>
-            <Form.Item
-              label="Email"
-              name="email"
-              htmlFor="email"
-              rules={[{ required: true, message: "Email is required!" }]}
+        {/* Form */}
+        <Form
+          layout="vertical"
+          onFinish={onFinish}
+          className="[&_.ant-form-item-explain-error]:text-red-500 [&_.ant-form-item-explain-error]:text-sm"
+        >
+          <Form.Item
+            label={<span className="text-gray-700 font-medium">Email</span>}
+            name="email"
+            rules={[{ required: true, message: "Email is required!" }]}
+          >
+            <Input placeholder="Enter your email" className="py-2" />
+          </Form.Item>
+
+          <Form.Item
+            label={<span className="text-gray-700 font-medium">Password</span>}
+            name="password"
+            rules={[{ required: true, message: "Password is required!" }]}
+          >
+            <Input.Password
+              placeholder="Enter your password"
+              className="py-2"
+            />
+          </Form.Item>
+
+          <Form.Item className="mt-5">
+            <Button
+              type="primary"
+              htmlType="submit"
+              block
+              className="!py-2 !text-base"
             >
-              <Input type="email" placeholder="Enter your Email" />
-            </Form.Item>
+              Login
+            </Button>
+          </Form.Item>
+        </Form>
 
-            <Form.Item
-              label="Password"
-              name="password"
-              htmlFor="password"
-              rules={[{ required: true, message: "Password is required!" }]}
-            >
-              <Input.Password />
-            </Form.Item>
-
-            <Form.Item>
-              <Button type="primary" block htmlType="submit">
-                Login
-              </Button>
-            </Form.Item>
-          </Form>
-        </section>
-
-        <section>
-          <p>
-            New User ? <Link to="/register">Register Here</Link>
-          </p>
-        </section>
+        {/* Register link */}
+        <p className="text-center mt-4 text-gray-600">
+          New User?{" "}
+          <Link
+            to="/register"
+            className="text-blue-600 hover:underline font-medium"
+          >
+            Register Here
+          </Link>
+        </p>
       </main>
     </div>
   );
