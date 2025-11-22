@@ -1,11 +1,19 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { hideLoading, showLoading } from "../redux/loaderSlice";
-import { message } from "antd";
+import { Layout, Menu, message } from "antd";
 import { GetCurrentUser } from "../api/user";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  HomeOutlined,
+  LogoutOutlined,
+  ProfileOutlined,
+} from "@ant-design/icons";
+import { Header } from "antd/es/layout/layout";
 
 const ProtectedRoute = ({ children }) => {
+  //get curr usee for showing dynamic profile
+  const { user } = useSelector((state) => state.user);
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -34,7 +42,56 @@ const ProtectedRoute = ({ children }) => {
     }
   }, []);
 
-  return <>{children}</>;
+  const navItems = [
+    {
+      key: "Home",
+      label: <span onClick={() => navigate("/")}>Home</span>,
+      icon: <HomeOutlined />,
+    },
+    {
+      key: "Profile",
+      label: (
+        <span
+          onClick={() => {
+            if (user?.role === "owner") {
+              navigate("/owner");
+            } else {
+              navigate("/profile");
+            }
+          }}
+        >
+          Profile
+        </span>
+      ),
+      icon: <ProfileOutlined />,
+    },
+    {
+      key: "Logout",
+      label: (
+        <span
+          onClick={() => {
+            localStorage.removeItem("tokenForBPR");
+            navigate("/login");
+          }}
+        >
+          Logout
+        </span>
+      ),
+      icon: <LogoutOutlined />,
+    },
+  ];
+
+  return (
+    <>
+      <Layout>
+        <Header className="items-center sticky top-0">
+          <h2 className="text-white">Book Practice Room</h2>
+          <Menu theme="dark" mode="horizontal" items={navItems} />
+        </Header>
+        {children}
+      </Layout>
+    </>
+  );
 };
 
 export default ProtectedRoute;
