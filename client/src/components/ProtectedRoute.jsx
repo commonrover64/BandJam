@@ -9,7 +9,8 @@ import {
   LogoutOutlined,
   ProfileOutlined,
 } from "@ant-design/icons";
-import { Header } from "antd/es/layout/layout";
+import { Content, Footer, Header } from "antd/es/layout/layout";
+import { setUser } from "../redux/userSlice";
 
 const ProtectedRoute = ({ children }) => {
   //get curr usee for showing dynamic profile
@@ -22,7 +23,7 @@ const ProtectedRoute = ({ children }) => {
       dispatch(showLoading());
       const response = await GetCurrentUser();
       if (response.success) {
-        dispatch(setUser(response?.data));
+        dispatch(setUser(response.data));
       } else {
         message.warning(response?.message);
       }
@@ -56,7 +57,7 @@ const ProtectedRoute = ({ children }) => {
             if (user?.role === "owner") {
               navigate("/owner");
             } else {
-              navigate("/profile");
+              navigate("/user");
             }
           }}
         >
@@ -84,11 +85,17 @@ const ProtectedRoute = ({ children }) => {
   return (
     <>
       <Layout>
-        <Header className="items-center sticky top-0">
-          <h2 className="text-white">Book Practice Room</h2>
+        <Header className="flex items-center sticky top-0">
+          <h2 className="text-white" onClick={() => navigate("/")}>
+            Book Practice Room
+          </h2>
           <Menu theme="dark" mode="horizontal" items={navItems} />
         </Header>
-        {children}
+        <Content>{children}</Content>
+        <Footer className="fixed bottom-0 w-full text-center !bg-[#001529] !text-white">
+          Book Practice Room Created by{" "}
+          <a href="https://github.com/commonrover64">Siddhartha</a>
+        </Footer>
       </Layout>
     </>
   );
