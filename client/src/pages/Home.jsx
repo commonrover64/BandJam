@@ -1,11 +1,12 @@
-import React from "react";
+import React from 'react'
+import RoomCards from '../utils/RoomCards'
 
 const Home = () => {
   return (
     <>
-      <div>Home</div>
+    <RoomCards/>
     </>
-  );
-};
+  )
+}
 
-export default Home;
+export default Home

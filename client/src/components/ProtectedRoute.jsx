@@ -85,7 +85,7 @@ const ProtectedRoute = ({ children }) => {
   return (
     <>
       <Layout>
-        <Header className="flex items-center sticky top-0">
+        <Header className="flex items-center sticky z-10 top-0">
           <h2 className="text-white" onClick={() => navigate("/")}>
             Book Practice Room
           </h2>
