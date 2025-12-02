@@ -28,7 +28,8 @@ const registerUser = async (req, res, next) => {
 const loginUser = async (req, res, next) => {
   try {
     // check first user exist of not
-    const user = await userModel.findOne({ email: req?.body?.email });
+    const email = req?.body?.email.toLowerCase();
+    const user = await userModel.findOne({ email: email });
     if (!user) {
       return res.status(404).send({
         success: false,
