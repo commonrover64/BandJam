@@ -3,7 +3,9 @@ import { createSlice } from "@reduxjs/toolkit";
 const userSlice = createSlice({
   name: "users",
   initialState: {
-    user: null,
+    user: "test", 
+    // need to implement redux-persist or use localStore. 
+    // if set null then profile loads for 1st time only and gets null after refresh
   },
   reducers: {
     setUser: (state, action) => {

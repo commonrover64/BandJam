@@ -1,6 +1,5 @@
 import React, { Children } from "react";
 import ProfileDashBoard from "../utils/ProfileDashBoard";
-import StudioDashboard from "../utils/StudioDashboard";
 import { Tabs } from "antd";
 
 const User = () => {
@@ -8,7 +7,7 @@ const User = () => {
     {
       key: "profile",
       label: "Profile",
-      Children: <ProfileDashBoard />,
+      children: <ProfileDashBoard />,
     },
   ];
 
