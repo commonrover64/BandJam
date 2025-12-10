@@ -5,8 +5,8 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import PageNotFound from "./pages/PageNotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
-import User from "./pages/User";
-import Owner from "./pages/Owner";
+import User from "./pages/user/User";
+import Owner from "./pages/owner/Owner";
 
 function App() {
   return (

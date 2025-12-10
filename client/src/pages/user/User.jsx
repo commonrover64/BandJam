@@ -1,5 +1,5 @@
 import React, { Children } from "react";
-import ProfileDashBoard from "../utils/ProfileDashBoard";
+import ProfileDashBoard from "../../utils/ProfileDashBoard";
 import { Tabs } from "antd";
 
 const User = () => {

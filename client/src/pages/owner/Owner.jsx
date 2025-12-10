@@ -1,7 +1,7 @@
 import React from "react";
-import ProfileDashBoard from "../utils/ProfileDashBoard";
+import ProfileDashBoard from "../../utils/ProfileDashBoard";
 import { Tabs } from "antd";
-import ManageRoomDashboard from "../utils/ManageRoomDashboard";
+import ManageRoomDashboard from "../../utils/ManageRoomDashboard";
 
 const Owner = () => {
   const tableItems = [

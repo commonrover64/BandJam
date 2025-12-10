@@ -17,6 +17,7 @@ const ManageRoomDashboard = () => {
     const response = await GetAllRoomsbyID(user?._id);
     setMockRooms(response.data);
   };
+
   useEffect(() => {
     fetchRoom();
   }, []);
