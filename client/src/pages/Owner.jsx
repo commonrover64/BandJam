@@ -1,7 +1,7 @@
 import React from "react";
 import ProfileDashBoard from "../utils/ProfileDashBoard";
-import StudioDashboard from "../utils/StudioDashboard";
 import { Tabs } from "antd";
+import ManageRoomDashboard from "../utils/ManageRoomDashboard";
 
 const Owner = () => {
   const tableItems = [
@@ -13,7 +13,7 @@ const Owner = () => {
     {
       key: "studio",
       label: "Manage Practice Rooms",
-      children: <StudioDashboard />,
+      children: <ManageRoomDashboard />,
     },
   ];
 

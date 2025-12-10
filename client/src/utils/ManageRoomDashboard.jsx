@@ -1,30 +1,25 @@
+import React, { useEffect } from "react";
 import { Button, Card } from "antd";
-import React from "react";
+import { useSelector } from "react-redux";
+import { DeleteRoom, GetAllRoomsbyID } from "../api/rooms";
+import { useState } from "react";
 
-const StudioDashboard = () => {
-  const mockRooms = [
-    {
-      _id: 1,
-      name: "Studio A",
-      price: 500,
-      location: "Lalpur, Ranchi",
-      status: "Available",
-    },
-    {
-      _id: 2,
-      name: "Studio B",
-      price: 400,
-      location: "Hinoo, Ranchi",
-      status: "Unavailable",
-    },
-    {
-      _id: 3,
-      name: "Studio C",
-      price: 650,
-      location: "Kadamkuan",
-      status: "Available",
-    },
-  ];
+const ManageRoomDashboard = () => {
+  const { user } = useSelector((state) => state.user);
+  const [mockRooms, setMockRooms] = useState([]);
+
+  const deleteRoom = async(value) =>{
+    await DeleteRoom(value)
+    await fetchRoom();
+  }
+
+  const fetchRoom = async () => {
+    const response = await GetAllRoomsbyID(user?._id);
+    setMockRooms(response.data);
+  };
+  useEffect(() => {
+    fetchRoom();
+  }, []);
 
   return (
     <div className="p-6">
@@ -42,10 +37,10 @@ const StudioDashboard = () => {
             title={<span className="font-semibold">{room.name}</span>}
           >
             <p>
-              <span className="font-semibold">Price/hr:</span> ₹{room.price}
+              <span className="font-semibold">Rate:</span> ₹{room.rate} / h
             </p>
             <p>
-              <span className="font-semibold">Location:</span> {room.location}
+              <span className="font-semibold">Address:</span> {room.address}
             </p>
             <p>
               <span className="font-semibold">Status:</span>{" "}
@@ -62,7 +57,9 @@ const StudioDashboard = () => {
 
             <div className="flex justify-between mt-4">
               <Button type="default">Edit</Button>
-              <Button danger>Delete</Button>
+              <Button danger onClick={(e) => deleteRoom(room._id)}>
+                Delete
+              </Button>
             </div>
           </Card>
         ))}
@@ -71,4 +68,4 @@ const StudioDashboard = () => {
   );
 };
 
-export default StudioDashboard;
+export default ManageRoomDashboard;
