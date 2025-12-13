@@ -3,8 +3,7 @@ import { axiosInstance } from ".";
 const RegisterRoom = async (values) => {
   try {
     const response = await axiosInstance.post("/room/addroom", values);
-    console.log(response);
-    return response.data;
+    return response;
   } catch (error) {
     console.log(error);
   }

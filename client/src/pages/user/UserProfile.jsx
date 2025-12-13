@@ -1,19 +1,13 @@
-import React from "react";
+import React, { Children } from "react";
 import ProfileDashBoard from "../../utils/ProfileDashBoard";
 import { Tabs } from "antd";
-import ManageRoomDashboard from "../../utils/ManageRoomDashboard";
 
-const Owner = () => {
+const UserProfile = () => {
   const tableItems = [
     {
       key: "profile",
       label: "Profile",
       children: <ProfileDashBoard />,
-    },
-    {
-      key: "studio",
-      label: "Manage Practice Rooms",
-      children: <ManageRoomDashboard />,
     },
   ];
 
@@ -31,4 +25,4 @@ const Owner = () => {
   );
 };
 
-export default Owner;
+export default UserProfile;
