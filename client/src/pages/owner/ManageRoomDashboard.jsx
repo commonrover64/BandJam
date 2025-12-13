@@ -3,7 +3,7 @@ import { Button, Card, message } from "antd";
 import { useSelector } from "react-redux";
 import { DeleteRoom, GetAllRoomsbyID, RegisterRoom } from "../../api/rooms";
 import { useState } from "react";
-import AddRoom from "./AddRoom";
+import AddRoom from "./RoomForm";
 
 const ManageRoomDashboard = () => {
   const { user } = useSelector((state) => state.user);
@@ -94,8 +94,8 @@ const ManageRoomDashboard = () => {
               <div className="flex justify-between mt-4">
                 <Button
                   type="primary"
-                  onClick={() => {
-                    addNewRoom();
+                  onClick={(event) => {
+                    console.log(room)
                   }}
                 >
                   Edit

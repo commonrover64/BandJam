@@ -1,7 +1,7 @@
 import { Button, Checkbox, Form, Input, InputNumber, Modal, Radio } from "antd";
 import React from "react";
 
-const AddRoom = ({ open, onclose, onSubmit }) => {
+const RoomForm = ({ open, onclose, onSubmit }) => {
   const handleFinsh = (values) => {
     onSubmit(values);
   };
@@ -102,4 +102,4 @@ const AddRoom = ({ open, onclose, onSubmit }) => {
   );
 };
 
-export default AddRoom;
+export default RoomForm;
