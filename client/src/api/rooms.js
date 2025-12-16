@@ -29,10 +29,9 @@ const GetAllRoomsbyID = async (values) => {
   }
 };
 
-const UpdateRoom = async (values) => {
+const UpdateRoomByID = async (values) => {
   try {
     const response = await axiosInstance.patch("/room/updateroom", values);
-    console.log(response);
     return response.data;
   } catch (error) {
     console.log(error);
@@ -50,4 +49,4 @@ const DeleteRoom = async (values) => {
   }
 };
 
-export { RegisterRoom, GetAllRooms, UpdateRoom, DeleteRoom, GetAllRoomsbyID };
+export { RegisterRoom, GetAllRooms, UpdateRoomByID, DeleteRoom, GetAllRoomsbyID };

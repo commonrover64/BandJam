@@ -1,12 +1,14 @@
 import React, { useEffect } from "react";
 import { Button, Card, message } from "antd";
 import { useSelector } from "react-redux";
-import { DeleteRoom, GetAllRoomsbyID, RegisterRoom } from "../../api/rooms";
+import { DeleteRoom, GetAllRoomsbyID, RegisterRoom, UpdateRoomByID } from "../../api/rooms";
 import { useState } from "react";
-import AddRoom from "./RoomForm";
+import RoomForm from "./RoomForm";
 
 const ManageRoomDashboard = () => {
   const { user } = useSelector((state) => state.user);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [selectedRoom, setSelectedRoom] = useState(null);
   const [mockRooms, setMockRooms] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -32,7 +34,7 @@ const ManageRoomDashboard = () => {
       const response = await RegisterRoom(payload);
 
       if (response.success) {
-        console.log("created room")
+        console.log("created room");
         return message.success(response.message);
       } else {
         return message.error(response.message);
@@ -40,11 +42,36 @@ const ManageRoomDashboard = () => {
     } catch (error) {
       message.error(error);
     } finally {
-      closeModal()
-      fetchRoom()
+      closeModal();
+      setIsEditMode(false)
+      setSelectedRoom(null)
+      fetchRoom();
     }
   };
 
+  const updateRoom = async (values) => {
+    try {
+      const payload = {
+        ...values,
+        _id: selectedRoom._id
+      }
+      
+      const response = await UpdateRoomByID(payload);
+      if(response.success) {
+        console.log("update section", payload, "success")
+      }
+      
+    } catch (error) {
+      message.error(error);
+      console.log("update failed")
+    }finally {
+      closeModal();
+      setIsEditMode(false)
+      setSelectedRoom(null)
+      fetchRoom();
+    }
+  }
+  
   useEffect(() => {
     fetchRoom();
   }, []);
@@ -60,7 +87,17 @@ const ManageRoomDashboard = () => {
 
       {/* Modal overlay */}
       {isModalOpen && (
-        <AddRoom open={openModal} onclose={closeModal} onSubmit={addNewRoom} />
+        <RoomForm
+          open={isModalOpen}
+          onclose={() => {
+            closeModal();
+            setIsEditMode(false);
+            setSelectedRoom(null);
+          }}
+          onSubmit={isEditMode ? updateRoom : addNewRoom}
+          initialValues={isEditMode ? selectedRoom : null}
+          isEditMode={isEditMode}
+        />
       )}
 
       {/* Rooms Grid */}
@@ -94,13 +131,15 @@ const ManageRoomDashboard = () => {
               <div className="flex justify-between mt-4">
                 <Button
                   type="primary"
-                  onClick={(event) => {
-                    console.log(room)
+                  onClick={() => {
+                    setIsEditMode(true);
+                    setSelectedRoom(room);
+                    openModal();
                   }}
                 >
                   Edit
                 </Button>
-                {}
+
                 <Button danger onClick={(e) => deleteRoom(room._id)}>
                   Delete
                 </Button>

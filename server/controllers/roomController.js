@@ -33,7 +33,7 @@ const removeRoom = async (req, res) => {
 
 const editRoom = async (req, res) => {
   try {
-    const update = await roomModel.findByIdAndUpdate(req?.body?.ID, req.body, {
+    const update = await roomModel.findByIdAndUpdate(req?.body?._id, req.body, {
       new: true,
     });
 
@@ -47,14 +47,12 @@ const editRoom = async (req, res) => {
 
 const getAllRoomsbyID = async (req, res) => {
   try {
-    const allRooms = await roomModel.find({owner:req?.body?.ID});
-    res
-      .status(200)
-      .json({
-        success: true,
-        message: "All Rooms by id fetched sucessfully",
-        data: allRooms,
-      });
+    const allRooms = await roomModel.find({ owner: req?.body?.ID });
+    res.status(200).json({
+      success: true,
+      message: "All Rooms by id fetched sucessfully",
+      data: allRooms,
+    });
   } catch (error) {
     res.status(500).json({ error: error });
   }
@@ -63,16 +61,20 @@ const getAllRoomsbyID = async (req, res) => {
 const getAllRooms = async (req, res) => {
   try {
     const allRooms = await roomModel.find();
-    res
-      .status(200)
-      .json({
-        success: true,
-        message: "All Rooms fetched sucessfully",
-        data: allRooms,
-      });
+    res.status(200).json({
+      success: true,
+      message: "All Rooms fetched sucessfully",
+      data: allRooms,
+    });
   } catch (error) {
     res.status(500).json({ error: error });
   }
 };
 
-module.exports = { createRoom, removeRoom, editRoom, getAllRooms, getAllRoomsbyID };
+module.exports = {
+  createRoom,
+  removeRoom,
+  editRoom,
+  getAllRooms,
+  getAllRoomsbyID,
+};

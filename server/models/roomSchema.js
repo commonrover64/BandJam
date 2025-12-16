@@ -19,6 +19,11 @@ const roomSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    equipments: {
+      type: Array,
+      required: false,
+      default: [],
+    },
     description: {
       type: String,
       required: true,
