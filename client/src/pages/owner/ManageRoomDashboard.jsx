@@ -1,7 +1,12 @@
 import React, { useEffect } from "react";
 import { Button, Card, message } from "antd";
 import { useSelector } from "react-redux";
-import { DeleteRoom, GetAllRoomsbyID, RegisterRoom, UpdateRoomByID } from "../../api/rooms";
+import {
+  DeleteRoom,
+  GetAllRoomsbyID,
+  RegisterRoom,
+  UpdateRoomByID,
+} from "../../api/rooms";
 import { useState } from "react";
 import RoomForm from "./RoomForm";
 
@@ -34,7 +39,6 @@ const ManageRoomDashboard = () => {
       const response = await RegisterRoom(payload);
 
       if (response.success) {
-        console.log("created room");
         return message.success(response.message);
       } else {
         return message.error(response.message);
@@ -43,8 +47,8 @@ const ManageRoomDashboard = () => {
       message.error(error);
     } finally {
       closeModal();
-      setIsEditMode(false)
-      setSelectedRoom(null)
+      setIsEditMode(false);
+      setSelectedRoom(null);
       fetchRoom();
     }
   };
@@ -53,25 +57,23 @@ const ManageRoomDashboard = () => {
     try {
       const payload = {
         ...values,
-        _id: selectedRoom._id
-      }
-      
+        _id: selectedRoom._id,
+      };
+
       const response = await UpdateRoomByID(payload);
-      if(response.success) {
-        console.log("update section", payload, "success")
+      if (response.success) {
+        return message.success(response.message);
       }
-      
     } catch (error) {
       message.error(error);
-      console.log("update failed")
-    }finally {
+    } finally {
       closeModal();
-      setIsEditMode(false)
-      setSelectedRoom(null)
+      setIsEditMode(false);
+      setSelectedRoom(null);
       fetchRoom();
     }
-  }
-  
+  };
+
   useEffect(() => {
     fetchRoom();
   }, []);
