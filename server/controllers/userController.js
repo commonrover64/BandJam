@@ -68,7 +68,7 @@ const loginUser = async (req, res, next) => {
 
 const currentUser = async (req, res) => {
   try {
-    const user = await userModel.findById(req?.body?.userId);
+    const user = await userModel.findById(req?.body?.userId).select("-password");
     res.send({
       success: true,
       message: "user detail fetched sucessfully",
