@@ -5,8 +5,8 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import PageNotFound from "./pages/PageNotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
-import User from "./pages/user/UserProfile";
-import Owner from "./pages/owner/OwnerProfile";
+import Profile from "./pages/Profile";
+import { useSelector } from "react-redux";
 
 function App() {
   return (
@@ -23,19 +23,10 @@ function App() {
           />
 
           <Route
-            path="/owner"
+            path="/profile"
             element={
               <ProtectedRoute>
-                <Owner />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/user"
-            element={
-              <ProtectedRoute>
-                <User />
+                <Profile />
               </ProtectedRoute>
             }
           />

@@ -26,9 +26,11 @@ const ProtectedRoute = ({ children }) => {
         dispatch(setUser(response.data));
       } else {
         message.warning(response?.message);
+        navigate("/login");
       }
     } catch (error) {
       message.error(error);
+      navigate("/login");
     } finally {
       dispatch(hideLoading());
     }
@@ -46,38 +48,23 @@ const ProtectedRoute = ({ children }) => {
   const navItems = [
     {
       key: "Home",
-      label: <span onClick={() => navigate("/")}>Home</span>,
+      label: "Home",
+      onClick: () => navigate("/"),
       icon: <HomeOutlined />,
     },
     {
       key: "Profile",
-      label: (
-        <span
-          onClick={() => {
-            if (user?.role === "owner") {
-              navigate("/owner");
-            } else {
-              navigate("/user");
-            }
-          }}
-        >
-          Profile
-        </span>
-      ),
+      label: "Profile",
+      onClick: () => navigate("/profile"),
       icon: <ProfileOutlined />,
     },
     {
       key: "Logout",
-      label: (
-        <span
-          onClick={() => {
-            localStorage.removeItem("tokenForBPR");
-            navigate("/login");
-          }}
-        >
-          Logout
-        </span>
-      ),
+      label: "Logout",
+      onClick: () => {
+        localStorage.removeItem("tokenForBPR");
+        navigate("/login");
+      },
       icon: <LogoutOutlined />,
     },
   ];

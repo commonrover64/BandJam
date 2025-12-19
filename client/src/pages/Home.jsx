@@ -27,12 +27,12 @@ const Home = () => {
     <div className="min-h-screen w-full bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-8">
       <div className="w-full max-w-6xl mx-auto">
         {/* Heading */}
-        <h1 className="text-4xl font-extrabold text-center text-white tracking-wide mb-10">
+        <h1 className="text-4xl font-extrabold text-center text-white tracking-wide mb-12">
           Search Practice Rooms
         </h1>
 
         {/* Search Bar + Refresh */}
-        <div className="flex gap-4 mb-10">
+        <div className="flex flex-col sm:flex-row gap-4 mb-12">
           <Input
             placeholder="Search for a practice room..."
             value={search}
@@ -41,33 +41,70 @@ const Home = () => {
           />
 
           <Button
-            onClick={() => getAllRooms()}
+            onClick={getAllRooms}
             type="primary"
-            className="px-6 py-5 rounded-lg text-white font-medium"
+            className="px-8 py-5 rounded-lg text-white font-medium"
           >
             Refresh
           </Button>
         </div>
 
         {/* Cards Section */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
           {filteredRooms.map((room) => (
             <Card
               key={room._id}
-              title={room.name}
-              bordered={false}
-              className="bg-gray-100 shadow-xl hover:shadow-2xl transition-all duration-200 rounded-xl p-4"
+              title={
+                <h2 className="text-lg font-semibold text-gray-800">
+                  {room.name}
+                </h2>
+              }
+              className="bg-gray-100 shadow-lg hover:shadow-2xl transition-all duration-300 rounded-2xl p-5"
             >
-              <p className="text-gray-700">
+              {/* Equipment */}
+              <div className="mb-4">
+                <p className="text-sm font-semibold text-gray-700 mb-2">
+                  Available Equipment:
+                </p>
+
+                <div className="flex flex-wrap gap-2">
+                  {room.equipments && room.equipments.length > 0 ? (
+                    room.equipments.map((equipment, idx) => (
+                      <span
+                        key={idx}
+                        className="px-3 py-1 text-xs font-medium bg-gray-200 text-gray-800 rounded-full capitalize"
+                      >
+                        {equipment}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-xs text-gray-500 italic">
+                      No equipment provided
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Description */}
+              <p className="text-sm text-gray-700 mb-3">
                 <span className="font-semibold">Description:</span>{" "}
                 {room.description}
               </p>
-              <p className="text-gray-700">
+
+              {/* Rate */}
+              <p className="text-sm text-gray-700 mb-2">
                 <span className="font-semibold">Rate:</span> ₹{room.rate} / hr
               </p>
-              <p className="text-gray-700">
-                <span className="font-semibold">Location:</span> {room.location}
+
+              {/* Address */}
+              <p className="text-sm text-gray-700 mb-6">
+                <span className="font-semibold">Address:</span> {room.address}
               </p>
+
+              {/* Action */}
+              <Button type="primary" block className="rounded-lg font-medium">
+                Book Room
+              </Button>
             </Card>
           ))}
 

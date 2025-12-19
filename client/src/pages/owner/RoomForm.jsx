@@ -71,9 +71,9 @@ const RoomForm = ({ open, onclose, onSubmit, initialValues, isEditMode }) => {
         >
           <Checkbox.Group
             options={[
-              { label: "Drum Set", value: "drums" },
-              { label: "Amplifiers", value: "amps" },
-              { label: "Microphones", value: "mics" },
+              { label: "Drum Set", value: "Drums" },
+              { label: "Amplifiers", value: "Amplifiers" },
+              { label: "Microphones", value: "Microphones" },
             ]}
           />
         </Form.Item>

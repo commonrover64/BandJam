@@ -14,7 +14,7 @@ const ManageRoomDashboard = () => {
   const { user } = useSelector((state) => state.user);
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState(null);
-  const [mockRooms, setMockRooms] = useState([]);
+  const [rooms, setrooms] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const closeModal = () => setIsModalOpen(false);
@@ -27,7 +27,7 @@ const ManageRoomDashboard = () => {
 
   const fetchRoom = async () => {
     const response = await GetAllRoomsbyID(user?._id);
-    setMockRooms(response.data);
+    setrooms(response.data);
   };
 
   const addNewRoom = async (values) => {
@@ -105,7 +105,7 @@ const ManageRoomDashboard = () => {
       {/* Rooms Grid */}
       {!isModalOpen && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {mockRooms.map((room) => (
+          {rooms.map((room) => (
             <Card
               key={room._id}
               className="shadow-sm border hover:shadow-md transition"
