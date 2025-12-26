@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { Button, Card, message } from "antd";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
   DeleteRoom,
   GetAllRoomsbyID,
@@ -9,16 +9,15 @@ import {
 } from "../../api/rooms";
 import { useState } from "react";
 import RoomForm from "./RoomForm";
+import { hideModal, showModal } from "../../redux/modalSlice";
 
 const ManageRoomDashboard = () => {
   const { user } = useSelector((store) => store.user);
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [rooms, setrooms] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const closeModal = () => setIsModalOpen(false);
-  const openModal = () => setIsModalOpen(true);
+  const { isModalOpen } = useSelector((store) => store.modal);
+  const dispatch = useDispatch()
 
   const deleteRoom = async (value) => {
     await DeleteRoom(value);
@@ -46,7 +45,7 @@ const ManageRoomDashboard = () => {
     } catch (error) {
       message.error(error);
     } finally {
-      closeModal();
+      dispatch(hideModal());
       setIsEditMode(false);
       setSelectedRoom(null);
       fetchRoom();
@@ -67,7 +66,7 @@ const ManageRoomDashboard = () => {
     } catch (error) {
       message.error(error);
     } finally {
-      closeModal();
+      dispatch(hideModal());
       setIsEditMode(false);
       setSelectedRoom(null);
       fetchRoom();
@@ -82,7 +81,7 @@ const ManageRoomDashboard = () => {
     <div className="p-6">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
-        <Button type="primary" onClick={openModal}>
+        <Button type="primary" onClick={()=>dispatch(showModal())}>
           Add New Room
         </Button>
       </div>
@@ -92,7 +91,7 @@ const ManageRoomDashboard = () => {
         <RoomForm
           open={isModalOpen}
           onclose={() => {
-            closeModal();
+            dispatch(hideModal());
             setIsEditMode(false);
             setSelectedRoom(null);
           }}
@@ -136,7 +135,7 @@ const ManageRoomDashboard = () => {
                   onClick={() => {
                     setIsEditMode(true);
                     setSelectedRoom(room);
-                    openModal();
+                    dispatch(showModal());
                   }}
                 >
                   Edit

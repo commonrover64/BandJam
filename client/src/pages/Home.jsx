@@ -2,15 +2,15 @@ import React, { useState, useEffect } from "react";
 import { Input, Card, message, Button } from "antd";
 import { GetAllRooms } from "../api/rooms";
 import BookingPage from "./booking/BookingPage";
+import { useDispatch, useSelector } from "react-redux";
+import { hideModal, showModal } from "../redux/modalSlice";
 
 const Home = () => {
   const [search, setSearch] = useState("");
   const [rooms, setRooms] = useState([]);
   const [room, setRoom] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const closeModal = () => setIsModalOpen(false);
-  const openModal = () => setIsModalOpen(true);
+  const { isModalOpen } = useSelector((store) => store.modal);
+  const dispatch = useDispatch();
 
   const getAllRooms = async () => {
     try {
@@ -56,20 +56,20 @@ const Home = () => {
         </div>
 
         {isModalOpen && (
-        <BookingPage
-          open={isModalOpen}
-          onclose={() => {
-            closeModal();
-            setRoom(null);
-          }}
-          room={room}
-          onSubmit={console.log("Room booked")}
-        />
-      )}
+          <BookingPage
+            open={isModalOpen}
+            onclose={() => {
+              dispatch(hideModal());
+              setRoom(null);
+            }}
+            room={room}
+            onSubmit={console.log("Room booked")}
+          />
+        )}
 
         {!isModalOpen && (
           <>
-            ({/* Cards Section */}
+            {/* Cards Section */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
               {filteredRooms.map((room) => (
                 <Card
@@ -130,9 +130,9 @@ const Home = () => {
                     type="primary"
                     block
                     className="rounded-lg font-medium mt-6"
-                    onClick={()=>{
-                      setRoom(room)
-                      openModal()
+                    onClick={() => {
+                      setRoom(room);
+                      dispatch(showModal());
                     }}
                   >
                     Book Room
@@ -146,7 +146,6 @@ const Home = () => {
                 </p>
               )}
             </div>
-            )
           </>
         )}
       </div>

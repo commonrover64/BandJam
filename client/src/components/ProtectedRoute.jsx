@@ -1,9 +1,9 @@
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { hideLoading, showLoading } from "../redux/loaderSlice";
+import { hideModal, showModal } from "../redux/modalSlice";
 import { Layout, Menu, message } from "antd";
 import { GetCurrentUser } from "../api/user";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import {
   HomeOutlined,
   LogoutOutlined,
@@ -13,14 +13,12 @@ import { Content, Footer, Header } from "antd/es/layout/layout";
 import { setUser } from "../redux/userSlice";
 
 const ProtectedRoute = ({ children }) => {
-  //get curr usee for showing dynamic profile
-  const { user } = useSelector((state) => state.user);
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
   const getValidUser = async () => {
     try {
-      dispatch(showLoading());
+      dispatch(showModal());
       const response = await GetCurrentUser();
       if (response.success) {
         dispatch(setUser(response.data));
@@ -32,7 +30,7 @@ const ProtectedRoute = ({ children }) => {
       message.error(error);
       navigate("/login");
     } finally {
-      dispatch(hideLoading());
+      dispatch(hideModal());
     }
   };
 
