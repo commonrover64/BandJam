@@ -6,7 +6,6 @@ import Register from "./pages/Register";
 import PageNotFound from "./pages/PageNotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Profile from "./pages/Profile";
-import { useSelector } from "react-redux";
 
 function App() {
   return (

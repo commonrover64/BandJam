@@ -2,10 +2,8 @@ import { Card } from "antd";
 import React from "react";
 import { useSelector } from "react-redux";
 
-
 const ProfileDashBoard = () => {
-  
-  const {user} = useSelector((state) => state.user);
+  const { user } = useSelector((store) => store.user);
 
   return (
     <div className="flex justify-center items-center bg-gray-100 p-4">

@@ -11,7 +11,7 @@ import { useState } from "react";
 import RoomForm from "./RoomForm";
 
 const ManageRoomDashboard = () => {
-  const { user } = useSelector((state) => state.user);
+  const { user } = useSelector((store) => store.user);
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [rooms, setrooms] = useState([]);

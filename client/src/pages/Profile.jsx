@@ -1,12 +1,11 @@
 import React from "react";
 import ManageRoomDashboard from "./owner/ManageRoomDashboard";
-import ProfileDashBoard from "../utils/ProfileDashBoard";
+import ProfileDashBoard from "./ProfileDashBoard";
 import { Tabs } from "antd";
 import { useSelector } from "react-redux";
 
 const Profile = () => {
   const { user } = useSelector((state) => state.user);
-    console.log(user)
   const tabs = [
     {
       key: "profile",
