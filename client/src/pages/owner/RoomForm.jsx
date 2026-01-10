@@ -90,7 +90,7 @@ const RoomForm = ({ open, onclose, onSubmit, initialValues, isEditMode }) => {
         </Form.Item>
 
         <Form.Item
-          label="Rate (per hour)"
+          label="Rate (per day)"
           name="rate"
           rules={[{ required: true, message: "Rate is required!" }]}
         >

@@ -111,7 +111,7 @@ const ManageRoomDashboard = () => {
               title={<span className="font-semibold">{room.name}</span>}
             >
               <p>
-                <span className="font-semibold">Rate:</span> ₹{room.rate} / h
+                <span className="font-semibold">Rate:</span> ₹{room.rate} / day
               </p>
               <p>
                 <span className="font-semibold">Address:</span> {room.address}
