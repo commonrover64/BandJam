@@ -2,6 +2,7 @@ import React from "react";
 import { Button, Form, Input, message } from "antd";
 import { Link, useNavigate } from "react-router-dom";
 import { LoginUser } from "../api/user";
+import { LockOutlined, MailOutlined } from "@ant-design/icons";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -11,7 +12,6 @@ const Login = () => {
       const response = await LoginUser(values);
       if (response.success) {
         message.success(response?.message);
-
         setTimeout(() => {
           localStorage.setItem("tokenForBPR", response?.token);
           navigate("/");
@@ -20,67 +20,103 @@ const Login = () => {
         message.warning(response?.message);
       }
     } catch (error) {
-      message.error(error);
+      message.error(error.message || "Something went wrong");
     }
   };
 
   return (
-    <div className="flex justify-center items-center h-screen bg-gradient-to-r from-gray-400 to-gray-700 px-4">
-      {/* Tighter, cleaner card */}
-      <main className="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm">
-        {/* Title */}
-        <h1 className="text-2xl font-semibold text-center text-gray-800 mb-6">
-          Login to <span className="text-blue-600">BandJam</span>
-        </h1>
+    <div className="min-h-screen w-full bg-[#0f172a] flex items-center justify-center p-6 relative overflow-hidden">
+      {/* Background Mesh Gradients */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-indigo-600/10 blur-[120px] rounded-full" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-600/10 blur-[120px] rounded-full" />
+      </div>
 
-        {/* Form */}
-        <Form
-          layout="vertical"
-          onFinish={onFinish}
-          className="[&_.ant-form-item-explain-error]:text-red-500 [&_.ant-form-item-explain-error]:text-sm"
-        >
-          <Form.Item
-            label={<span className="text-gray-700 font-medium">Email</span>}
-            name="email"
-            rules={[{ required: true, message: "Email is required!" }]}
+      <div className="relative w-full max-w-[420px]">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-white tracking-tight">
+            Login to{" "}
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-blue-400">
+              Book Practice Room
+            </span>
+          </h1>
+        </div>
+
+        {/* Login Card */}
+        <main className="bg-slate-800/40 backdrop-blur-xl border border-slate-700/50 rounded-3xl shadow-2xl p-8 mb-6">
+          <Form
+            layout="vertical"
+            onFinish={onFinish}
+            requiredMark={false}
+            className="space-y-4"
           >
-            <Input placeholder="Enter your email" className="py-2" />
-          </Form.Item>
-
-          <Form.Item
-            label={<span className="text-gray-700 font-medium">Password</span>}
-            name="password"
-            rules={[{ required: true, message: "Password is required!" }]}
-          >
-            <Input.Password
-              placeholder="Enter your password"
-              className="py-2"
-            />
-          </Form.Item>
-
-          <Form.Item className="mt-5">
-            <Button
-              type="primary"
-              htmlType="submit"
-              block
-              className="!py-2 !text-base"
+            <Form.Item
+              label={
+                <span className="text-slate-300 font-medium text-sm">
+                  Email
+                </span>
+              }
+              name="email"
+              rules={[{ required: true, message: "Email is required!" }]}
             >
-              Login
-            </Button>
-          </Form.Item>
-        </Form>
+              <Input
+                prefix={<MailOutlined className="text-slate-500 mr-2" />}
+                placeholder="Enter your email"
+                className="bg-slate-900/50 border-slate-700 text-white hover:border-indigo-500 focus:border-indigo-500 h-12 rounded-xl"
+              />
+            </Form.Item>
 
-        {/* Register link */}
-        <p className="text-center mt-4 text-gray-600">
-          New User?{" "}
-          <Link
-            to="/register"
-            className="text-blue-600 hover:underline font-medium"
+            <Form.Item
+              label={
+                <span className="text-slate-300 font-medium text-sm">
+                  Password
+                </span>
+              }
+              name="password"
+              rules={[{ required: true, message: "Password is required!" }]}
+            >
+              <Input.Password
+                prefix={<LockOutlined className="text-slate-500 mr-2" />}
+                placeholder="Enter your password"
+                className="bg-slate-900/50 border-slate-700 text-white hover:border-indigo-500 focus:border-indigo-500 h-12 rounded-xl"
+              />
+            </Form.Item>
+
+            <Form.Item className="pt-2">
+              <Button
+                type="primary"
+                htmlType="submit"
+                block
+                className="h-12 bg-indigo-500 hover:bg-indigo-600 border-none rounded-xl text-base font-bold shadow-lg shadow-indigo-500/20 transition-all active:scale-[0.98]"
+              >
+                Login
+              </Button>
+            </Form.Item>
+          </Form>
+
+          <p className="text-center text-slate-400 mt-6 text-sm">
+            New User?{" "}
+            <Link
+              to="/register"
+              className="text-indigo-400 hover:text-indigo-300 font-semibold transition-colors"
+            >
+              Register Here
+            </Link>
+          </p>
+        </main>
+
+        {/* Footer info */}
+        <p className="text-center text-white text-sm">
+          Book Practice Room by{" "}
+          <a
+            href="https://github.com/commonrover64"
+            className="text-blue-400 hover:text-cyan-300 transition-colors"
           >
-            Register Here
-          </Link>
+            Sid
+          </a>
         </p>
-      </main>
+      </div>
     </div>
   );
 };
