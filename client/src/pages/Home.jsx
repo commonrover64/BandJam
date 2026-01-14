@@ -16,6 +16,7 @@ const Home = () => {
   const [rooms, setRooms] = useState([]);
   const [room, setRoom] = useState(null);
   const { isModalOpen } = useSelector((store) => store.modal);
+  const userId = useSelector((store) => store.user.user._id);
   const dispatch = useDispatch();
 
   const getAllRooms = async () => {
@@ -37,12 +38,6 @@ const Home = () => {
 
   return (
     <div className="min-h-screen w-full bg-[#0f172a] text-slate-200 selection:bg-indigo-500/30">
-      {/* Mesh Gradient Background Decor */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] rounded-full bg-indigo-500/10 blur-[120px]" />
-        <div className="absolute top-[20%] -right-[10%] w-[30%] h-[30%] rounded-full bg-blue-600/10 blur-[120px]" />
-      </div>
-
       <div className="relative w-full max-w-7xl mx-auto px-6 py-12">
         {/* Header Section */}
         <header className="mb-16 text-center">
@@ -86,6 +81,7 @@ const Home = () => {
               dispatch(hideModal());
               setRoom(null);
             }}
+            userId={userId}
             room={room}
             onSubmit={() => message.success("Room booked successfully!")}
           />

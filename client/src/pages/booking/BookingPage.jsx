@@ -1,79 +1,57 @@
-// import React from "react";
-// import { Modal, Form, DatePicker, TimePicker, InputNumber, Button } from "antd";
-
-// const BookingPage = ({ open, onclose, room, onSubmit }) => {
-//   const handleFinish = (values) => {
-//     const payload = {
-//       roomId: room?._id,
-//       ...values,
-//     };
-
-//     console.log("Booking payload:", payload);
-//     onSubmit;
-//     onclose();
-//   };
-
-//   return (
-//     <Modal
-//       open={open}
-//       onCancel={onclose}
-//       footer={null}
-//       centered
-//       title="Book Practice Room"
-//     >
-//       {/* Room Info */}
-//       <div className="mb-4">
-//         <h3 className="text-lg font-semibold">{room?.name}</h3>
-//         <p className="text-sm text-gray-500">
-//           ₹{room?.rate} / hour • {room?.address}
-//         </p>
-//       </div>
-
-//       <Form layout="vertical" onFinish={handleFinish}>
-//         <Form.Item
-//           label="Select Date"
-//           name="date"
-//           rules={[{ required: true, message: "Please select a date" }]}
-//         >
-//           <DatePicker
-//             className="w-full"
-//             disabledDate={(current) => {
-//               return current && current < new Date().setHours(0, 0, 0, 0);
-//             }}
-//           />
-//         </Form.Item>
-
-//         <div className="flex justify-end gap-3 mt-4">
-//           <Button onClick={onclose}>Cancel</Button>
-//           <Button type="primary" htmlType="submit">
-//             Confirm Booking
-//           </Button>
-//         </div>
-//       </Form>
-//     </Modal>
-//   );
-// };
-
-// export default BookingPage;
-
-
-
 import React, { useState } from "react";
-import { Modal, Form, DatePicker, Button, Alert } from "antd";
+import { Modal, Form, DatePicker, Button, Alert, message } from "antd";
+import { addNewBooking, getAllBookingsById } from "../../api/booking";
+import { useEffect } from "react";
+import { useSelector } from "react-redux";
 
-const BookingPage = ({ open, onclose, room }) => {
+const BookingPage = ({ open, onclose, room, userId }) => {
   const [isAvailable, setIsAvailable] = useState(null);
+  const [bookedDates, setBookedDates] = useState([]);
 
-  // 🔴 Mock unavailable dates (YYYY-MM-DD)
-  const unavailableDates = ["2026-01-10", "2026-01-15"];
+  useEffect(() => {
+    if (open && room?._id) getAllBookingForThisRoom();
+  }, [open, room?._id]);
 
-  const checkAvailability = (date) => {
+  const getAllBookingForThisRoom = async () => {
+    try {
+      const res = await getAllBookingsById(room?._id);
+      const dates = res.data.map((booking) => booking.date.split("T")[0]);
+
+      setBookedDates(dates);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const checkDateAvailabiltiy = (date) => {
     const selected = date.format("YYYY-MM-DD");
-    setIsAvailable(!unavailableDates.includes(selected));
+    setIsAvailable(!bookedDates.includes(selected));
+  };
+
+  const createNewBooking = async (payload) => {
+    try {
+      const response = await addNewBooking(payload);
+      if (response.success) {
+        return message.success(response.message);
+      } else {
+        return message.error(response.message);
+      }
+    } catch (error) {
+      message.error(error);
+    } finally {
+      setBookedDates(null);
+    }
   };
 
   const handleFinish = (values) => {
-    console.log("Booking confirmed:", values);
+    const payload = {
+      date: values.date.format("YYYY-MM-DD"),
+      user: userId,
+      room: room._id,
+      amount: room.rate,
+    };
+
+    createNewBooking(payload);
     onclose();
   };
 
@@ -103,7 +81,7 @@ const BookingPage = ({ open, onclose, room }) => {
             disabledDate={(current) =>
               current && current < new Date().setHours(0, 0, 0, 0)
             }
-            onChange={checkAvailability}
+            onChange={checkDateAvailabiltiy}
           />
         </Form.Item>
 
@@ -126,11 +104,7 @@ const BookingPage = ({ open, onclose, room }) => {
 
         <div className="flex justify-end gap-3 mt-4">
           <Button onClick={onclose}>Cancel</Button>
-          <Button
-            type="primary"
-            htmlType="submit"
-            disabled={!isAvailable}
-          >
+          <Button type="primary" htmlType="submit" disabled={!isAvailable}>
             Confirm Booking
           </Button>
         </div>

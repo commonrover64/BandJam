@@ -9,8 +9,9 @@ import {
   LogoutOutlined,
   ProfileOutlined,
 } from "@ant-design/icons";
-import { Content, Footer, Header } from "antd/es/layout/layout";
+import { Content, Header } from "antd/es/layout/layout";
 import { setUser } from "../redux/userSlice";
+import { hideLoading, showLoading } from "../redux/loaderSlice";
 
 const ProtectedRoute = ({ children }) => {
   const navigate = useNavigate();
@@ -18,7 +19,7 @@ const ProtectedRoute = ({ children }) => {
 
   const getValidUser = async () => {
     try {
-      dispatch(showModal());
+      dispatch(showLoading());
       const response = await GetCurrentUser();
       if (response.success) {
         dispatch(setUser(response.data));
@@ -30,7 +31,7 @@ const ProtectedRoute = ({ children }) => {
       message.error(error);
       navigate("/login");
     } finally {
-      dispatch(hideModal());
+      dispatch(hideLoading());
     }
   };
 
@@ -77,10 +78,6 @@ const ProtectedRoute = ({ children }) => {
           <Menu theme="dark" mode="horizontal" items={navItems} />
         </Header>
         <Content>{children}</Content>
-        <Footer className="fixed bottom-0 w-full text-center !bg-[#001529] !text-white">
-          Book Practice Room Created by{" "}
-          <a href="https://github.com/commonrover64">Siddhartha</a>
-        </Footer>
       </Layout>
     </>
   );
