@@ -1,111 +1,204 @@
 import React from "react";
-import { Button, Checkbox, Form, Input, InputNumber, Modal } from "antd";
+import {
+  Checkbox,
+  Form,
+  Input,
+  InputNumber,
+  Modal,
+  ConfigProvider,
+  theme,
+} from "antd";
 
 const RoomForm = ({ open, onclose, onSubmit, initialValues, isEditMode }) => {
-  const handleFinsh = (values) => {
+  const [form] = Form.useForm();
+
+  const handleFinish = (values) => {
     onSubmit(values);
   };
 
+  const equipmentOptions = [
+    { label: "Drum Set", value: "Drums" },
+    { label: "Amplifiers", value: "Amplifiers" },
+    { label: "Microphones", value: "Microphones" },
+  ];
+
   return (
-    <Modal
-      open={open}
-      onCancel={onclose}
-      centered
-      footer={null}
-      className="rounded-lg"
+    <ConfigProvider
+      theme={{
+        algorithm: theme.darkAlgorithm,
+        token: {
+          colorPrimary: "#6366f1",
+          colorBgElevated: "#0f172a",
+          colorBorder: "#334155",
+          borderRadius: 12,
+        },
+        components: {
+          Checkbox: {
+            colorPrimary: "#6366f1",
+          },
+        },
+      }}
     >
-      <h2 className="text-xl font-semibold mb-4 text-center">
-        {isEditMode ? "Update Room" : "Add Room"}
-      </h2>
-
-      <Form
-        layout="vertical"
-        onFinish={handleFinsh}
-        initialValues={initialValues}
+      <Modal
+        open={open}
+        onCancel={onclose}
+        centered
+        footer={null}
+        width={600}
+        styles={{
+          mask: { backdropFilter: "blur(4px)" },
+        }}
+        closeIcon={
+          <span className="text-slate-400 hover:text-white transition-colors text-lg">
+            ×
+          </span>
+        }
       >
-        <Form.Item
-          label="Room Name"
-          name="name"
-          rules={[
-            {
-              required: true,
-              message: "Room name is required!",
-            },
-          ]}
-        >
-          <Input placeholder="Enter Room Name" />
-        </Form.Item>
-
-        <Form.Item
-          label="Address"
-          name="address"
-          rules={[
-            {
-              required: true,
-              message: "Address is required!",
-            },
-          ]}
-        >
-          <Input placeholder="Enter Room Address" />
-        </Form.Item>
-
-        <Form.Item
-          label="Phone"
-          name="phone"
-          rules={[
-            { required: true, message: "Phone number is required!" },
-            {
-              pattern: /^[0-9]{10}$/,
-              message: "Phone number must be 10 digits",
-            },
-          ]}
-        >
-          <Input maxLength={10} placeholder="Enter phone number" />
-        </Form.Item>
-
-        <Form.Item
-          label="Available Equipments:"
-          htmlFor="equipments"
-          name="equipments"
-          initialValue={null}
-        >
-          <Checkbox.Group
-            options={[
-              { label: "Drum Set", value: "Drums" },
-              { label: "Amplifiers", value: "Amplifiers" },
-              { label: "Microphones", value: "Microphones" },
-            ]}
-          />
-        </Form.Item>
-
-        <Form.Item
-          label="Description"
-          name="description"
-          rules={[{ required: true, message: "Description is required!" }]}
-        >
-          <Input.TextArea
-            placeholder="Add extra room details (e.g.. 2 mics, 4 amps)."
-            rows={2}
-          />
-        </Form.Item>
-
-        <Form.Item
-          label="Rate (per day)"
-          name="rate"
-          rules={[{ required: true, message: "Rate is required!" }]}
-        >
-          <InputNumber min={0} className="!w-full" placeholder="Enter rate" />
-        </Form.Item>
-
-        <div className="flex justify-end gap-3 mt-4">
-          <Button onClick={onclose}>Cancel</Button>
-
-          <Button type="primary" htmlType="submit">
-            {isEditMode ? "Update Room" : "Add Room"}
-          </Button>
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-bold text-white tracking-tight">
+            {isEditMode ? "Update Studio Details" : "Register New Room"}
+          </h2>
         </div>
-      </Form>
-    </Modal>
+
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={handleFinish}
+          // Ensure equipments is always an array so it doesn't crash
+          initialValues={{
+            ...initialValues,
+            equipments: initialValues?.equipments || [],
+          }}
+          requiredMark={false}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
+            <Form.Item
+              label={
+                <span className="text-slate-300 font-medium ml-1">
+                  Room Name
+                </span>
+              }
+              name="name"
+              rules={[{ required: true, message: "Required" }]}
+            >
+              <Input
+                className="h-11 !bg-slate-900/50 border-slate-700 text-slate-200"
+                placeholder="e.g. Studio A"
+              />
+            </Form.Item>
+
+            <Form.Item
+              label={
+                <span className="text-slate-300 font-medium ml-1">
+                  Rate (₹ / day)
+                </span>
+              }
+              name="rate"
+              rules={[{ required: true, message: "Required" }]}
+            >
+              <InputNumber
+                min={0}
+                className="w-full h-11 !bg-slate-900/50 border-slate-700 flex items-center"
+                placeholder="Price"
+              />
+            </Form.Item>
+          </div>
+
+          <Form.Item
+            label={
+              <span className="text-slate-300 font-medium ml-1">Address</span>
+            }
+            name="address"
+            rules={[{ required: true, message: "Required" }]}
+          >
+            <Input
+              className="h-11 !bg-slate-900/50 border-slate-700 text-slate-200"
+              placeholder="Location"
+            />
+          </Form.Item>
+
+          <Form.Item
+            label={
+              <span className="text-slate-300 font-medium ml-1">
+                Contact Phone
+              </span>
+            }
+            name="phone"
+            rules={[
+              { required: true, message: "Required" },
+              { pattern: /^[0-9]{10}$/, message: "Invalid phone" },
+            ]}
+          >
+            <Input
+              maxLength={10}
+              className="h-11 !bg-slate-900/50 border-slate-700 text-slate-200"
+              placeholder="10-digit number"
+            />
+          </Form.Item>
+
+          <Form.Item
+            label={
+              <span className="text-slate-300 font-medium ml-1">
+                Available Equipments
+              </span>
+            }
+            name="equipments"
+          >
+            <Checkbox.Group
+              options={equipmentOptions}
+              className="w-full p-4 bg-slate-900/50 rounded-xl border border-slate-700/50 flex gap-6"
+            />
+          </Form.Item>
+
+          <Form.Item
+            label={
+              <span className="text-slate-300 font-medium ml-1">
+                Description
+              </span>
+            }
+            name="description"
+            rules={[{ required: true, message: "Required" }]}
+          >
+            <Input.TextArea
+              rows={3}
+              className="!bg-slate-900/50 border-slate-700 text-slate-200"
+              placeholder="Gear details..."
+            />
+          </Form.Item>
+
+          <div className="flex items-center justify-end gap-4 mt-8 pt-6 border-t border-slate-800">
+            <button
+              type="button"
+              onClick={onclose}
+              className="px-6 py-2.5 text-slate-400 hover:text-white font-medium transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-8 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/20 active:scale-95 transition-all"
+            >
+              {isEditMode ? "Save Changes" : "Register Room"}
+            </button>
+          </div>
+        </Form>
+      </Modal>
+
+      {/* This small block ensures the text inside the Checkbox.Group matches your slate theme */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+        .ant-checkbox-group .ant-checkbox-wrapper {
+          color: #94a3b8 !important; /* text-slate-400 */
+          font-weight: 500;
+        }
+        .ant-checkbox-group .ant-checkbox-wrapper:hover {
+          color: #ffffff !important;
+        }
+      `,
+        }}
+      />
+    </ConfigProvider>
   );
 };
 
