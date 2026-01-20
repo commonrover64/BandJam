@@ -58,7 +58,13 @@ const Login = () => {
                 </span>
               }
               name="email"
-              rules={[{ required: true, message: "Email is required!" }]}
+              rules={[
+                {
+                  type: "email",
+                  required: true,
+                  message: "Enter a valid Email Address"
+                },
+              ]}
             >
               <Input
                 prefix={<MailOutlined className="text-slate-500 mr-2" />}

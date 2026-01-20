@@ -13,10 +13,9 @@ const RegisterUser = async (values) => {
 const LoginUser = async (values) => {
   try {
     const response = await axiosInstance.post("/users/login", values);
-    console.log(response);
     return response.data;
   } catch (error) {
-    console.log(error);
+    return error;
   }
 };
 

@@ -13,7 +13,7 @@ const registerUser = async (req, res, next) => {
       });
     }
 
-    const newUser = new userModel(req?.body);
+    const newUser = new userModel(req?.body).toLowerCase();
     await newUser.save();
     res.status(201).send({
       success: true,
@@ -30,10 +30,11 @@ const loginUser = async (req, res, next) => {
     // check first user exist of not
     const email = req?.body?.email.toLowerCase();
     const user = await userModel.findOne({ email: email });
+
     if (!user) {
-      return res.status(404).send({
+      return res.send({     // if i send res with 404 status. it gets caught in catch block in frontedn api and the below message will not be shown in ui
         success: false,
-        message: "user does not exist!! Register please",
+        message: "user does not exist!! Register first",
       });
     }
 
@@ -57,18 +58,22 @@ const loginUser = async (req, res, next) => {
 
     res.status(200).send({
       success: true,
-      message: "Logged In sucessfully!",
+      message: "Logged In Sucessfully!",
       token: token,
     });
   } catch (error) {
-    console.log(error);
-    throw new Error(error);
+    res.status(500).send({
+      success: false,
+      message: error.message,
+    });
   }
 };
 
 const currentUser = async (req, res) => {
   try {
-    const user = await userModel.findById(req?.body?.userId).select("-password");
+    const user = await userModel
+      .findById(req?.body?.userId)
+      .select("-password");
     res.send({
       success: true,
       message: "user detail fetched sucessfully",
