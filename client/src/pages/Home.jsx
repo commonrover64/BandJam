@@ -37,41 +37,33 @@ const Home = () => {
   );
 
   return (
-    <div className="min-h-screen w-full bg-[#0f172a] text-slate-200 selection:bg-indigo-500/30">
-      <div className="relative w-full max-w-7xl mx-auto px-6 py-12">
-        {/* Header Section */}
-        <header className="mb-16 text-center">
-          <h1 className="text-5xl md:text-6xl font-black mb-4 bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400 tracking-tight">
-            Find Your Stage.
+    <div className="min-h-screen w-full bg-[#20242A] text-slate-200">
+      <div className="max-w-7xl mx-auto px-6 py-10">
+        <header className="mb-12 text-center">
+          <h1 className="text-4xl md:text-5xl font-semibold tracking-tight text-slate-100">
+            Find your stage
           </h1>
-          <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-            Premium practice spaces for creators, musicians, and performers.
-            Book your next session in seconds.
+          <p className="text-slate-400 mt-3 max-w-xl mx-auto">
+            Practice rooms built for musicians and creators.
           </p>
         </header>
 
-        {/* Search & Actions Bar */}
-        <div className="flex flex-col md:flex-row items-center gap-4 mb-16 max-w-3xl mx-auto">
-          <div className="relative w-full group">
-            <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-              <SearchOutlined className="text-slate-500 group-focus-within:text-indigo-400 transition-colors" />
-            </div>
-            <input
-              type="text"
-              placeholder="Search by name or equipment..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-slate-800/50 border border-slate-700 text-white pl-12 pr-4 py-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all placeholder:text-slate-500 backdrop-blur-sm"
-            />
-          </div>
+        <div className="flex flex-col md:flex-row gap-4 mb-12 max-w-3xl mx-auto">
+          <Input
+            prefix={<SearchOutlined className="text-slate-500" />}
+            placeholder="Search rooms..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="h-12 rounded-xl bg-[#262A30] border border-slate-600 text-slate-100"
+          />
 
-          <button
+          <Button
             onClick={getAllRooms}
-            className="w-full md:w-auto flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-8 py-4 rounded-2xl border border-slate-700 transition-all active:scale-95"
+            className="h-12 rounded-xl bg-[#262A30] border border-slate-600 text-slate-300 hover:text-slate-100"
+            icon={<ReloadOutlined />}
           >
-            <ReloadOutlined />
-            <span>Refresh</span>
-          </button>
+            Refresh
+          </Button>
         </div>
 
         {isModalOpen && (
@@ -92,63 +84,53 @@ const Home = () => {
             {filteredRooms.map((room) => (
               <div
                 key={room._id}
-                className="group relative bg-slate-800/40 border border-slate-700/50 rounded-3xl p-6 hover:bg-slate-800/60 transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_20px_50px_rgba(0,0,0,0.3)] backdrop-blur-md flex flex-col"
+                className="relative bg-[#2E333B] border border-slate-700 rounded-3xl p-6 flex flex-col transition hover:-translate-y-1 hover:shadow-[0_20px_50px_rgba(0,0,0,0.4)]"
               >
-                {/* Price Tag */}
-                <div className="absolute top-6 right-6 bg-indigo-500 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg shadow-indigo-500/20">
-                  ₹{room.rate}
-                  <span className="text-xs font-normal opacity-80">/day</span>
+                {/* Price */}
+                <div className="absolute top-5 right-5 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
+                  ₹{room.rate}/day
                 </div>
 
-                <div className="flex-1">
-                  <h2 className="text-2xl font-bold text-white mb-2 group-hover:text-indigo-300 transition-colors">
-                    {room.name}
-                  </h2>
+                <h2 className="text-xl font-semibold text-slate-100 mb-1">
+                  {room.name}
+                </h2>
 
-                  <div className="flex items-center gap-2 text-slate-400 text-sm mb-6 italic">
-                    <EnvironmentOutlined />
-                    <span>{room.address}</span>
-                  </div>
-
-                  {/* Description */}
-                  <p className="text-slate-400 text-sm line-clamp-2 mb-6 leading-relaxed">
-                    {room.description}
-                  </p>
-
-                  {/* Equipment Chips */}
-                  <div className="mb-8">
-                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">
-                      <ToolOutlined />
-                      <span>Gear Included</span>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {room.equipments?.length > 0 ? (
-                        room.equipments.map((item, idx) => (
-                          <span
-                            key={idx}
-                            className="px-3 py-1 text-xs font-medium bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 rounded-lg capitalize"
-                          >
-                            {item}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="text-xs text-slate-600">
-                          Standard Setup
-                        </span>
-                      )}
-                    </div>
-                  </div>
+                <div className="flex items-center gap-2 text-xs text-slate-400 mb-4">
+                  <EnvironmentOutlined />
+                  {room.address}
                 </div>
 
-                {/* Modern CTA Button */}
+                <p className="text-sm text-slate-400 leading-relaxed mb-6 line-clamp-2">
+                  {room.description}
+                </p>
+
+                {/* Equipment */}
+                <div className="flex flex-wrap gap-2 mb-8">
+                  {room.equipments?.length ? (
+                    room.equipments.map((item, idx) => (
+                      <span
+                        key={idx}
+                        className="px-3 py-1 text-xs rounded-lg bg-slate-700/40 text-slate-300"
+                      >
+                        {item}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-xs text-slate-500">
+                      Standard setup
+                    </span>
+                  )}
+                </div>
+
+                {/* CTA */}
                 <button
                   onClick={() => {
                     setRoom(room);
                     dispatch(showModal());
                   }}
-                  className="w-full bg-white text-slate-950 font-bold py-4 rounded-xl hover:bg-indigo-400 hover:text-white transition-all duration-300 flex items-center justify-center gap-2"
+                  className="mt-auto h-11 rounded-xl font-medium text-slate-100 bg-linear-to-r from-indigo-500/70 to-sky-500/70 hover:brightness-110 transition"
                 >
-                  Book Session
+                  Book session
                 </button>
               </div>
             ))}

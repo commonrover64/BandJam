@@ -61,23 +61,40 @@ const BookingPage = ({ open, onclose, room, userId }) => {
       onCancel={onclose}
       footer={null}
       centered
-      title="Book Practice Room"
+      title={null}
+      className="
+        [&_.ant-modal-content]:!bg-[#2E333B]
+        [&_.ant-modal-content]:!rounded-2xl
+        [&_.ant-modal-content]:!shadow-[0_30px_90px_rgba(0,0,0,0.6)]
+      "
     >
       <div className="mb-4">
-        <h3 className="text-lg font-semibold">{room?.name}</h3>
-        <p className="text-sm text-gray-500">
+        <h3 className="text-lg font-semibold text-slate-100">{room?.name}</h3>
+        <p className="text-sm text-slate-400">
           ₹{room?.rate} / hour • {room?.address}
         </p>
       </div>
 
       <Form layout="vertical" onFinish={handleFinish}>
         <Form.Item
-          label="Select Date"
+          label={<span className="text-slate-300">Select Date</span>}
           name="date"
           rules={[{ required: true, message: "Please select a date" }]}
         >
           <DatePicker
-            className="w-full"
+            className="
+              w-full
+              !bg-[#262A30]
+              !border-slate-600
+              !text-slate-100
+
+              [&_.ant-picker-input>input]:!text-slate-100
+              [&_.ant-picker-input>input::placeholder]:!text-slate-500
+              [&_.ant-picker-suffix]:!text-slate-400
+
+              hover:!border-slate-500
+              focus:!border-indigo-400
+            "
             disabledDate={(current) =>
               current && current < new Date().setHours(0, 0, 0, 0)
             }
@@ -91,6 +108,7 @@ const BookingPage = ({ open, onclose, room, userId }) => {
             type="error"
             message="This room is not available on the selected date."
             showIcon
+            className="!bg-red-500/10 !border-red-500/30 !text-red-300"
           />
         )}
 
@@ -99,12 +117,24 @@ const BookingPage = ({ open, onclose, room, userId }) => {
             type="success"
             message="This room is available on the selected date."
             showIcon
+            className="!bg-emerald-500/10 !border-emerald-500/30 !text-emerald-300"
           />
         )}
 
         <div className="flex justify-end gap-3 mt-4">
-          <Button onClick={onclose}>Cancel</Button>
-          <Button type="primary" htmlType="submit" disabled={!isAvailable}>
+          <Button
+            onClick={onclose}
+            className="!bg-[#262A30] !border-slate-600 !text-slate-300"
+          >
+            Cancel
+          </Button>
+
+          <Button
+            type="primary"
+            htmlType="submit"
+            disabled={!isAvailable}
+            className="!bg-gradient-to-r from-indigo-500/80 to-sky-500/80 !border-none"
+          >
             Confirm Booking
           </Button>
         </div>

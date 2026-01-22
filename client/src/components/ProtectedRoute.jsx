@@ -70,14 +70,40 @@ const ProtectedRoute = ({ children }) => {
 
   return (
     <>
-      <Layout>
-        <Header className="flex items-center sticky z-10 top-0">
-          <h2 className="text-white" onClick={() => navigate("/")}>
-            Book Practice Room
-          </h2>
-          <Menu theme="dark" mode="horizontal" items={navItems} />
+      <Layout className="min-h-screen !bg-[#20242A]">
+        <Header className="sticky top-0 z-20 h-16 px-6 flex items-center justify-between !bg-[#262A30] border-b border-slate-700/60">
+          {/* Brand */}
+          <div
+            onClick={() => navigate("/")}
+            className="text-slate-100 font-semibold tracking-tight cursor-pointer"
+          >
+            Band Jam
+          </div>
+
+          {/* Navigation */}
+          <Menu
+            mode="horizontal"
+            items={navItems}
+            className="
+              !bg-transparent border-none min-w-[260px]
+
+              [&_.ant-menu-item]:rounded-xl
+              [&_.ant-menu-item]:px-4
+              [&_.ant-menu-item]:!text-slate-300
+              [&_.ant-menu-item]:!transition-colors
+
+              [&_.ant-menu-item:hover]:!text-slate-100
+
+              [&_.ant-menu-item-selected]:!bg-slate-600/60
+              [&_.ant-menu-item-selected]:!text-slate-100
+
+              [&_.ant-menu-item-icon]:!text-slate-400
+              [&_.ant-menu-item-selected_.ant-menu-item-icon]:!text-slate-200
+            "
+          />
         </Header>
-        <Content>{children}</Content>
+
+        <Content className="px-6 py-6">{children}</Content>
       </Layout>
     </>
   );
