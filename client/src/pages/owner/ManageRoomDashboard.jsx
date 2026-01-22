@@ -75,13 +75,14 @@ const ManageRoomDashboard = () => {
     <div className="p-6">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">
+          +{" "}
+          <h1 className="text-xl font-semibold text-slate-100 tracking-tight">
             Manage your room listings and rates
           </h1>
         </div>
         <button
           onClick={() => dispatch(showModal())}
-          className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-lg shadow-indigo-500/20"
+          className="bg-gradient-to-r from-indigo-500/80 to-sky-500/80 text-white px-4 py-2 rounded-xl text-sm font-medium transition hover:brightness-110"
         >
           <PlusOutlined /> Add Room
         </button>
@@ -106,15 +107,15 @@ const ManageRoomDashboard = () => {
           {rooms.map((room) => (
             <div
               key={room._id}
-              className="bg-[#1e293b] border border-slate-700 rounded-xl p-6 hover:border-indigo-500/50 transition-all duration-300 shadow-md group"
+              className="bg-[#2E333B] border border-slate-700/60 rounded-2xl p-6 transition hover:-translate-y-0.5 hover:shadow-[0_20px_50px_rgba(0,0,0,0.4)] group"
             >
               {/* Card Header */}
               <div className="flex justify-between items-start mb-6">
-                <h3 className="text-lg font-bold text-white tracking-tight group-hover:text-indigo-400 transition-colors">
+                <h3 className="text-lg font-bold text-white tracking-tight group-hover:text-slate-100 transition-colors">
                   {room.name}
                 </h3>
                 <div className="bg-slate-800 px-3 py-1 rounded-full border border-slate-700">
-                  <span className="text-indigo-400 text-xs font-bold flex items-center gap-1">
+                  <span className="text-slate-300 text-xs font-semibold flex items-center gap-1">
                     <DollarOutlined /> {room.rate}{" "}
                     <span className="text-slate-500 font-normal">/day</span>
                   </span>
@@ -144,13 +145,13 @@ const ManageRoomDashboard = () => {
                     setSelectedRoom(room);
                     dispatch(showModal());
                   }}
-                  className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold py-2 rounded transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 bg-[#262A30] hover:border-slate-500 border border-slate-700 text-slate-300 text-xs font-medium py-2 rounded-xl transition"
                 >
                   <EditOutlined /> Edit
                 </button>
                 <button
                   onClick={() => deleteRoom(room._id)}
-                  className="px-3 bg-slate-800 hover:bg-rose-500/10 hover:text-rose-500 text-slate-400 text-xs font-semibold py-2 rounded transition-colors"
+                  className="px-3 bg-[#262A30] border border-slate-700 hover:border-rose-500/40 hover:text-rose-400 text-slate-400 text-xs font-medium py-2 rounded-xl transition"
                 >
                   <DeleteOutlined />
                 </button>

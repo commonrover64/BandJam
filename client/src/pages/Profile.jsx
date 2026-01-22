@@ -6,6 +6,7 @@ import { useSelector } from "react-redux";
 
 const Profile = () => {
   const { user } = useSelector((state) => state.user);
+
   const tabs = [
     {
       key: "profile",
@@ -23,34 +24,29 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#0f172a] p-4 text-slate-200">
-      {/* Dark Mode Themed Tabs */}
+    <div className="min-h-screen !bg-[#20242A] px-6 py-6 text-slate-200">
       <Tabs
         defaultActiveKey="profile"
         items={tabs}
         tabPosition="left"
-        className="dark-tabs"
-      />
+        className="
+          [&_.ant-tabs-nav]:!bg-transparent
+          [&_.ant-tabs-nav-wrap]:!px-2
+          [&_.ant-tabs-nav::before]:!border-slate-700/60
 
-      <style jsx global>{`
-        /* Changes tab text color to Slate */
-        .dark-tabs .ant-tabs-tab {
-          color: #94a3b8 !important;
-        }
-        /* Changes active tab color to Indigo */
-        .dark-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
-          color: #818cf8 !important;
-          font-weight: 600;
-        }
-        /* Changes the indicator bar to Indigo */
-        .dark-tabs .ant-tabs-ink-bar {
-          background: #6366f1 !important;
-        }
-        /* Adjusts the vertical divider line */
-        .dark-tabs .ant-tabs-nav::before {
-          border-color: #1e293b !important;
-        }
-      `}</style>
+          [&_.ant-tabs-tab]:!text-slate-400
+          [&_.ant-tabs-tab]:!px-4
+          [&_.ant-tabs-tab]:!rounded-lg
+          [&_.ant-tabs-tab]:!transition
+
+          [&_.ant-tabs-tab:hover]:!text-slate-200
+
+          [&_.ant-tabs-tab-active_.ant-tabs-tab-btn]:!text-slate-100
+          [&_.ant-tabs-tab-active_.ant-tabs-tab-btn]:!font-medium
+
+          [&_.ant-tabs-ink-bar]:!bg-slate-500
+        "
+      />
     </div>
   );
 };
