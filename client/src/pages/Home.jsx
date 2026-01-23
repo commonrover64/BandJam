@@ -87,8 +87,8 @@ const Home = () => {
                 className="relative bg-[#2E333B] border border-slate-700 rounded-3xl p-6 flex flex-col transition hover:-translate-y-1 hover:shadow-[0_20px_50px_rgba(0,0,0,0.4)]"
               >
                 {/* Price */}
-                <div className="absolute top-5 right-5 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
-                  ₹{room.rate}/day
+                <div className="absolute top-5 right-5 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/15 border border-indigo-500/30">
+                  ₹{room.rate} / day
                 </div>
 
                 <h2 className="text-xl font-semibold text-slate-100 mb-1">
