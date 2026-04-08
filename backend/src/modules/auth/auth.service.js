@@ -1,0 +1,64 @@
+const pool = require("../../config/db");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+
+// register a new user (owner or consumer)
+const registerUser = async ({ name, email, password, role }) => {
+  // check if email already exists
+  const existing = await pool.query("SELECT id FROM users WHERE email = $1", [
+    email,
+  ]);
+  if (existing.rows.length > 0) {
+    throw new Error("Email already in use");
+  }
+
+  // hash the password before storing
+  const hashed = await bcrypt.hash(password, 10);
+
+  const { rows } = await pool.query(
+    `INSERT INTO users (name, email, password, role)
+     VALUES ($1, $2, $3, $4)
+     RETURNING id, name, email, role`,
+    [name, email, hashed, role],
+  );
+
+  return rows[0];
+};
+
+// login — check email, compare password, return JWT
+const loginUser = async ({ email, password }) => {
+  const { rows } = await pool.query("SELECT * FROM users WHERE email = $1", [
+    email,
+  ]);
+  const user = rows[0];
+//   console.log("rows in login user: ",rows)
+
+  if (!user) throw new Error("Invalid email or password");
+
+  // bcrypt compares plain password against stored hash
+  const match = await bcrypt.compare(password, user.password);
+  if (!match) throw new Error("Invalid email or password");
+
+  // sign a JWT with user id and role, expires in 7 days
+  const token = jwt.sign(
+    { id: user.id, role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: "7d" },
+  );
+
+  return {
+    token,
+    user: { id: user.id, name: user.name, email: user.email, role: user.role },
+  };
+};
+
+// get user by id — used in /me route
+const getUserById = async (id) => {
+  const { rows } = await pool.query(
+    "SELECT id, name, email, role, created_at FROM users WHERE id = $1",
+    [id],
+  );
+  return rows[0];
+};
+
+module.exports = { registerUser, loginUser, getUserById };
