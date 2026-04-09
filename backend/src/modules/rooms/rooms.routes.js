@@ -6,9 +6,12 @@ const {
   update,
   remove,
   myRooms,
+  search,
 } = require("./rooms.controller");
 const authenticate = require("../../middleware/authenticate");
 const requireRole = require("../../middleware/requireRole");
+
+router.get("/search", search);
 
 // public — anyone can view a room
 router.get("/:id", getOne); // fetches one specific room by its UUID

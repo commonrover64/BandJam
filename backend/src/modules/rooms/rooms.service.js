@@ -97,10 +97,64 @@ const getOwnerRooms = async (ownerId) => {
   return rows;
 };
 
+const searchRooms = async ({
+  lat,
+  lng,
+  radius = 10,
+  minPrice,
+  maxPrice,
+  sortBy = "distance",
+}) => {
+  // radius is in km, ST_DWithin expects meters so multiply by 1000
+  const radiusInMeters = radius * 1000;
+
+  // base query — find all active rooms within radius
+  let query = `
+    SELECT
+      id, name, description, address, phone, price_per_day, is_active,
+      ST_Y(location::geometry) AS lat,
+      ST_X(location::geometry) AS lng,
+      -- calculate distance in km from search point to room
+      ROUND((ST_Distance(location, ST_SetSRID(ST_MakePoint($2, $1), 4326)) / 1000)::numeric, 2) AS distance_km
+    FROM rooms
+    WHERE is_active = TRUE
+    AND ST_DWithin(
+      location,
+      ST_SetSRID(ST_MakePoint($2, $1), 4326),
+      $3
+    )
+  `;
+
+  const params = [lat, lng, radiusInMeters];
+  let paramIndex = 4; // next param index after lat, lng, radius
+
+  // optional price filters
+  if (minPrice) {
+    query += ` AND price_per_day >= $${paramIndex}`;
+    params.push(minPrice);
+    paramIndex++;
+  }
+
+  if (maxPrice) {
+    query += ` AND price_per_day <= $${paramIndex}`;
+    params.push(maxPrice);
+    paramIndex++;
+  }
+
+  // sort by distance or price
+  if (sortBy === "price_asc") query += " ORDER BY price_per_day ASC";
+  else if (sortBy === "price_desc") query += " ORDER BY price_per_day DESC";
+  else query += " ORDER BY distance_km ASC"; // default sort by nearest
+
+  const { rows } = await pool.query(query, params);
+  return rows;
+};
+
 module.exports = {
   createRoom,
   getRoomById,
   updateRoom,
   deleteRoom,
   getOwnerRooms,
+  searchRooms,
 };
