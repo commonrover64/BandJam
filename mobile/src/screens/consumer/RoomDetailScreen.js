@@ -1,13 +1,21 @@
-import React, { useEffect, useState } from "react";
-import { View, StyleSheet, ScrollView, Alert } from "react-native";
+import React, { useEffect, useState, useRef } from "react";
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  Alert,
+  TouchableOpacity,
+} from "react-native";
 import { Text, Button, ActivityIndicator } from "react-native-paper";
 import MapView, { Marker } from "react-native-maps";
 import api from "../../services/api";
+import { colors } from "../../theme/colors";
 
 const RoomDetailScreen = ({ route, navigation }) => {
   const { roomId } = route.params;
   const [room, setRoom] = useState(null);
   const [loading, setLoading] = useState(true);
+  const mapRef = useRef(null);
 
   useEffect(() => {
     const fetchRoom = async () => {
@@ -26,51 +34,85 @@ const RoomDetailScreen = ({ route, navigation }) => {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size="large" color={colors.lavender} />
       </View>
     );
   }
 
+  const coordinate = {
+    latitude: parseFloat(room.lat),
+    longitude: parseFloat(room.lng),
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      {/* back button */}
+      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.back}>
+        <Text style={styles.backText}>← Back</Text>
+      </TouchableOpacity>
+
       <Text variant="headlineMedium" style={styles.title}>
         {room.name}
       </Text>
-      <Text variant="bodyMedium" style={styles.address}>
-        📍 {room.address}
-      </Text>
-      <Text variant="bodyMedium" style={styles.price}>
-        ₹{room.price_per_day} / day
-      </Text>
-      <Text variant="bodyMedium" style={styles.phone}>
-        📞 {room.phone}
-      </Text>
 
-      {room.description && (
-        <Text variant="bodyMedium" style={styles.description}>
-          {room.description}
-        </Text>
-      )}
-
-      {/* mini map showing room location */}
+      {/* full interactive map */}
       <MapView
+        ref={mapRef}
         style={styles.map}
         initialRegion={{
-          latitude: parseFloat(room.lat),
-          longitude: parseFloat(room.lng),
+          ...coordinate,
           latitudeDelta: 0.01,
           longitudeDelta: 0.01,
         }}
-        scrollEnabled={false}
+        // fully interactive — user can zoom, pan
       >
-        <Marker
-          coordinate={{
-            latitude: parseFloat(room.lat),
-            longitude: parseFloat(room.lng),
-          }}
-          title={room.name}
-        />
+        <Marker coordinate={coordinate} title={room.name} />
       </MapView>
+
+      {/* room info */}
+      <View style={styles.infoCard}>
+        <Text variant="bodyMedium" style={styles.label}>
+          📍 Address
+        </Text>
+        <Text variant="bodyMedium" style={styles.value}>
+          {room.address}
+        </Text>
+
+        <Text variant="bodyMedium" style={styles.label}>
+          💰 Price
+        </Text>
+        <Text
+          variant="bodyMedium"
+          style={[styles.value, { color: colors.green }]}
+        >
+          ₹{room.price_per_day} / day
+        </Text>
+
+        <Text variant="bodyMedium" style={styles.label}>
+          📞 Contact
+        </Text>
+        <Text variant="bodyMedium" style={styles.value}>
+          {room.phone}
+        </Text>
+
+        <Text variant="bodyMedium" style={styles.label}>
+          👤 Owner
+        </Text>
+        <Text variant="bodyMedium" style={styles.value}>
+          {room.owner_name}
+        </Text>
+
+        {room.description && (
+          <>
+            <Text variant="bodyMedium" style={styles.label}>
+              📝 About
+            </Text>
+            <Text variant="bodyMedium" style={styles.value}>
+              {room.description}
+            </Text>
+          </>
+        )}
+      </View>
 
       <Button
         mode="contained"
@@ -84,14 +126,25 @@ const RoomDetailScreen = ({ route, navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flexGrow: 1, padding: 24, backgroundColor: "#fff" },
-  center: { flex: 1, justifyContent: "center", alignItems: "center" },
-  title: { fontWeight: "bold", marginBottom: 8, marginTop: 48 },
-  address: { color: "gray", marginBottom: 4 },
-  price: { fontWeight: "bold", fontSize: 18, marginBottom: 4 },
-  phone: { marginBottom: 12 },
-  description: { color: "#444", marginBottom: 16 },
-  map: { height: 200, borderRadius: 12, marginBottom: 24 },
+  container: { flexGrow: 1, padding: 24, backgroundColor: colors.base },
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: colors.base,
+  },
+  back: { marginTop: 48, marginBottom: 12 },
+  backText: { color: colors.lavender, fontSize: 16 },
+  title: { fontWeight: "bold", color: colors.text, marginBottom: 16 },
+  map: { height: 240, borderRadius: 12, marginBottom: 16 },
+  infoCard: {
+    backgroundColor: colors.surface0,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+  },
+  label: { color: colors.subtext, marginTop: 12, fontSize: 12 },
+  value: { color: colors.text, marginTop: 2 },
   button: { paddingVertical: 4, marginBottom: 32 },
 });
 

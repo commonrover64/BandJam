@@ -1,18 +1,25 @@
 import React, { useState, useEffect } from "react";
-import { View, FlatList, StyleSheet, Alert } from "react-native";
-import { Text, Button, ActivityIndicator } from "react-native-paper";
+import {
+  View,
+  FlatList,
+  StyleSheet,
+  Alert,
+  TouchableOpacity,
+} from "react-native";
+import { Text, ActivityIndicator, Searchbar } from "react-native-paper";
 import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
 import api from "../../services/api";
 import RoomCard from "../../components/RoomCard";
+import { colors } from "../../theme/colors";
 
 const SearchScreen = ({ navigation }) => {
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(false);
   const [location, setLocation] = useState(null);
   const [mapRegion, setMapRegion] = useState(null);
+  const [showMap, setShowMap] = useState(false); // toggle map visibility
 
-  // get user's current location on screen load
   useEffect(() => {
     const getLocation = async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -51,22 +58,30 @@ const SearchScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
+      {/* header */}
       <Text variant="headlineMedium" style={styles.title}>
         Find a Space 🎸
       </Text>
+      <Text variant="bodyMedium" style={styles.subtitle}>
+        {rooms.length} rooms found nearby
+      </Text>
 
-      {/* map showing nearby rooms */}
-      {mapRegion && (
+      {/* map toggle button */}
+      <TouchableOpacity
+        style={styles.mapToggle}
+        onPress={() => setShowMap((prev) => !prev)}
+      >
+        <Text style={styles.mapToggleText}>
+          {showMap ? "🗺 Hide Map" : "🗺 Show Map"}
+        </Text>
+      </TouchableOpacity>
+
+      {/* collapsible map */}
+      {showMap && mapRegion && (
         <MapView style={styles.map} region={mapRegion}>
-          {/* user location marker */}
           {location && (
-            <Marker
-              coordinate={location}
-              pinColor="blue"
-              title="You are here"
-            />
+            <Marker coordinate={location} pinColor={colors.blue} title="You" />
           )}
-          {/* room markers */}
           {rooms.map((room) => (
             <Marker
               key={room.id}
@@ -84,13 +99,9 @@ const SearchScreen = ({ navigation }) => {
         </MapView>
       )}
 
-      {/* room list below map */}
-      <Text variant="titleMedium" style={styles.listTitle}>
-        {rooms.length} rooms nearby
-      </Text>
-
+      {/* room list */}
       {loading ? (
-        <ActivityIndicator style={{ marginTop: 24 }} />
+        <ActivityIndicator style={{ marginTop: 32 }} color={colors.lavender} />
       ) : (
         <FlatList
           data={rooms}
@@ -106,6 +117,7 @@ const SearchScreen = ({ navigation }) => {
           ListEmptyComponent={
             <Text style={styles.empty}>No rooms found nearby.</Text>
           }
+          showsVerticalScrollIndicator={false}
         />
       )}
     </View>
@@ -113,11 +125,19 @@ const SearchScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 24, backgroundColor: "#fff" },
-  title: { fontWeight: "bold", marginBottom: 12, marginTop: 48 },
-  map: { height: 220, borderRadius: 12, marginBottom: 16 },
-  listTitle: { marginBottom: 8, fontWeight: "bold" },
-  empty: { color: "gray", textAlign: "center", marginTop: 32 },
+  container: { flex: 1, padding: 24, backgroundColor: colors.base },
+  title: { fontWeight: "bold", marginTop: 48, color: colors.text },
+  subtitle: { color: colors.subtext, marginBottom: 12 },
+  mapToggle: {
+    backgroundColor: colors.surface0,
+    padding: 10,
+    borderRadius: 10,
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  mapToggleText: { color: colors.lavender, fontWeight: "bold" },
+  map: { height: 200, borderRadius: 12, marginBottom: 16 },
+  empty: { color: colors.overlay, textAlign: "center", marginTop: 48 },
 });
 
 export default SearchScreen;

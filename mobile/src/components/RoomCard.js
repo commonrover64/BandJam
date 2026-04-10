@@ -1,31 +1,48 @@
 import React from "react";
-import { StyleSheet } from "react-native";
-import { Card, Text } from "react-native-paper";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { Text } from "react-native-paper";
+import { colors } from "../theme/colors";
 
 const RoomCard = ({ room, onPress }) => {
   return (
-    <Card style={styles.card} onPress={onPress}>
-      <Card.Content>
-        <Text variant="titleMedium">{room.name}</Text>
-        <Text variant="bodySmall" style={styles.address}>
-          {room.address}
+    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.8}>
+      <View style={styles.row}>
+        <Text variant="titleMedium" style={styles.name}>
+          {room.name}
         </Text>
-        <Text variant="bodyMedium">₹{room.price_per_day} / day</Text>
-        {/* distance_km comes from PostGIS ST_Distance calculation in backend */}
-        {room.distance_km && (
-          <Text variant="bodySmall" style={styles.distance}>
-            📍 {room.distance_km} km away
-          </Text>
-        )}
-      </Card.Content>
-    </Card>
+        <Text variant="bodyMedium" style={styles.price}>
+          ₹{room.price_per_day}/day
+        </Text>
+      </View>
+      <Text variant="bodySmall" style={styles.address}>
+        📍 {room.address}
+      </Text>
+      {room.distance_km && (
+        <Text variant="bodySmall" style={styles.distance}>
+          {room.distance_km} km away
+        </Text>
+      )}
+    </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
-  card: { marginBottom: 12 },
-  address: { color: "gray", marginVertical: 4 },
-  distance: { color: "#6200ee", marginTop: 4 },
+  card: {
+    backgroundColor: colors.surface0,
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  name: { color: colors.text, fontWeight: "bold", flex: 1 },
+  price: { color: colors.green, fontWeight: "bold" },
+  address: { color: colors.subtext, marginBottom: 4 },
+  distance: { color: colors.sapphire },
 });
 
 export default RoomCard;
