@@ -31,7 +31,7 @@ const loginUser = async ({ email, password }) => {
     email,
   ]);
   const user = rows[0];
-//   console.log("rows in login user: ",rows)
+  //   console.log("rows in login user: ",rows)
 
   if (!user) throw new Error("Invalid email or password");
 
@@ -55,10 +55,46 @@ const loginUser = async ({ email, password }) => {
 // get user by id — used in /me route
 const getUserById = async (id) => {
   const { rows } = await pool.query(
-    "SELECT id, name, email, role, created_at FROM users WHERE id = $1",
+    `SELECT id, name, email, role, phone, instruments, created_at
+     FROM users WHERE id = $1`,
     [id],
   );
   return rows[0];
 };
 
-module.exports = { registerUser, loginUser, getUserById };
+const updateProfile = async (userId, { name }) => {
+  const { rows } = await pool.query(
+    `UPDATE users SET name = $1 WHERE id = $2
+     RETURNING id, name, email, role, phone, instruments`,
+    [name, userId],
+  );
+  return rows[0];
+};
+
+const updateInstruments = async (userId, instruments) => {
+  // instruments is an array like ["guitarist", "vocalist"]
+  const { rows } = await pool.query(
+    `UPDATE users SET instruments = $1 WHERE id = $2
+     RETURNING id, name, email, role, phone, instruments`,
+    [instruments, userId],
+  );
+  return rows[0];
+};
+
+const updatePhone = async (userId, phone) => {
+  const { rows } = await pool.query(
+    `UPDATE users SET phone = $1 WHERE id = $2
+     RETURNING id, name, email, role, phone, instruments`,
+    [phone, userId],
+  );
+  return rows[0];
+};
+
+module.exports = {
+  registerUser,
+  loginUser,
+  getUserById,
+  updateProfile,
+  updateInstruments,
+  updatePhone,
+};
