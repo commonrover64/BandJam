@@ -16,11 +16,14 @@ const createRoom = async (
 
 const getRoomById = async (id) => {
   const { rows } = await pool.query(
-    `SELECT id, owner_id, name, description, address, phone, price_per_day, is_active, created_at,
-            ST_Y(location::geometry) AS lat,
-            ST_X(location::geometry) AS lng
-     FROM rooms WHERE id = $1`,
-    //  ST_Y = latitude, ST_X = longitude — extracting back from PostGIS point
+    `SELECT r.id, r.owner_id, r.name, r.description, r.address,
+            r.phone, r.price_per_day, r.is_active, r.created_at,
+            ST_Y(r.location::geometry) AS lat,
+            ST_X(r.location::geometry) AS lng,
+            u.name AS owner_name
+     FROM rooms r
+     JOIN users u ON r.owner_id = u.id
+     WHERE r.id = $1`,
     [id],
   );
   if (!rows[0]) throw new Error("Room not found");
