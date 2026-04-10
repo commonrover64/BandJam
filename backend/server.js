@@ -8,6 +8,7 @@ const authRoutes = require("./src/modules/auth/auth.routes");
 const ownerRoutes = require("./src/modules/owners/owners.routes");
 const roomRoutes = require("./src/modules/rooms/rooms.routes");
 const bookingRoutes = require("./src/modules/bookings/bookings.routes");
+const paymentRoutes = require("./src/modules/payments/payments.routes");
 
 app.use(express.json());
 
@@ -15,6 +16,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/owners", ownerRoutes);
 app.use("/api/rooms", roomRoutes);
 app.use("/api/bookings", bookingRoutes);
+app.use("/api/payments", paymentRoutes);
 
 migrate().then(() => {
   app.listen(PORT, () => {
