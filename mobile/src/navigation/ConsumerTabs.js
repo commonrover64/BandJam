@@ -7,6 +7,7 @@ import MyBookingsScreen from "../screens/consumer/MyBookingsScreen";
 import RoomDetailScreen from "../screens/consumer/RoomDetailScreen";
 import BookingScreen from "../screens/consumer/BookingScreen";
 import ProfileScreen from "../screens/shared/ProfileScreen";
+import { colors } from "../theme/colors";
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -20,7 +21,17 @@ const SearchStack = () => (
 );
 
 const ConsumerTabs = () => (
-  <Tab.Navigator screenOptions={{ headerShown: false }}>
+  <Tab.Navigator
+    screenOptions={{
+      headerShown: false,
+      tabBarStyle: {
+        backgroundColor: colors.mantle,
+        borderTopColor: colors.surface0,
+      },
+      tabBarActiveTintColor: colors.lavender,
+      tabBarInactiveTintColor: colors.overlay,
+    }}
+  >
     <Tab.Screen
       name="Search"
       component={SearchStack}

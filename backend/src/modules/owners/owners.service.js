@@ -2,9 +2,9 @@ const pool = require("../../config/db");
 const transporter = require("../../config/mailer");
 
 // generate a random 6 digit OTP
-const generateOTP = () =>{
+const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
-}
+};
 
 const sendOTP = async (userId) => {
   // get user email from db
@@ -101,4 +101,17 @@ const completeOnboarding = async (
   return { message: "Onboarding complete" };
 };
 
-module.exports = { sendOTP, verifyOTP, completeOnboarding };
+const getOnboardingStatus = async (userId) => {
+  const { rows } = await pool.query(
+    "SELECT is_verified FROM owner_profiles WHERE user_id = $1",
+    [userId],
+  );
+  return { is_verified: rows[0]?.is_verified || false };
+};
+
+module.exports = {
+  sendOTP,
+  verifyOTP,
+  completeOnboarding,
+  getOnboardingStatus,
+};

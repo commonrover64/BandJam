@@ -1,4 +1,4 @@
-const { sendOTP, verifyOTP, completeOnboarding } = require("./owners.service");
+const { sendOTP, verifyOTP, completeOnboarding, getOnboardingStatus } = require("./owners.service");
 
 const sendOTPHandler = async (req, res) => {
   try {
@@ -27,4 +27,18 @@ const onboardHandler = async (req, res) => {
   }
 };
 
-module.exports = { sendOTPHandler, verifyOTPHandler, onboardHandler };
+const statusHandler = async (req, res) => {
+  try {
+    const status = await getOnboardingStatus(req.user.id);
+    res.status(200).json({ success: true, ...status });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+module.exports = {
+  sendOTPHandler,
+  verifyOTPHandler,
+  onboardHandler,
+  statusHandler,
+};

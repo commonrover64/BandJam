@@ -2,7 +2,9 @@ import React, { useState } from "react";
 import { View, StyleSheet, Alert, ScrollView } from "react-native";
 import { Text, TextInput, Button } from "react-native-paper";
 import MapView, { Marker } from "react-native-maps";
+import * as Location from "expo-location";
 import api from "../../services/api";
+import { colors } from "../../theme/colors";
 
 const CreateRoomScreen = () => {
   const [name, setName] = useState("");
@@ -106,7 +108,21 @@ const CreateRoomScreen = () => {
           latitudeDelta: 5,
           longitudeDelta: 5,
         }}
-        onPress={(e) => setLocation(e.nativeEvent.coordinate)}
+        onPress={async (e) => {
+          const coords = e.nativeEvent.coordinate;
+          setLocation(coords);
+
+          // reverse geocode — get address from coordinates
+          const result = await Location.reverseGeocodeAsync(coords);
+          if (result.length > 0) {
+            const r = result[0];
+            // build a readable address from the result
+            const readable = [r.name, r.street, r.district, r.city, r.region]
+              .filter(Boolean)
+              .join(", ");
+            setAddress(readable);
+          }
+        }}
       >
         <Marker coordinate={location} />
       </MapView>
@@ -131,24 +147,25 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     padding: 24,
-    backgroundColor: "#fff",
+    backgroundColor: colors.base,
   },
   title: {
     fontWeight: "bold",
-    marginBottom: 4,
     marginTop: 48,
+    color: colors.text,
   },
   subtitle: {
-    color: "gray",
+    color: colors.subtext,
     marginBottom: 24,
   },
   input: {
     marginBottom: 12,
-    backgroundColor: "#fff",
+    backgroundColor: colors.surface0,
   },
   mapLabel: {
     marginBottom: 8,
     fontWeight: "bold",
+    color: colors.text,
   },
   map: {
     height: 220,
@@ -156,7 +173,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   coords: {
-    color: "gray",
+    color: colors.overlay,
     marginBottom: 16,
   },
   button: {

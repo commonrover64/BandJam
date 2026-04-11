@@ -6,11 +6,22 @@ import MyRoomsScreen from "../screens/owner/MyRoomsScreen";
 import CreateRoomScreen from "../screens/owner/CreateRoomScreen";
 import OnboardingScreen from "../screens/owner/OnboardingScreen";
 import ProfileScreen from "../screens/shared/ProfileScreen";
+import { colors } from "../theme/colors";
 
 const Tab = createBottomTabNavigator();
 
 const OwnerTabs = () => (
-  <Tab.Navigator screenOptions={{ headerShown: false }}>
+  <Tab.Navigator
+    screenOptions={{
+      headerShown: false,
+      tabBarStyle: {
+        backgroundColor: colors.mantle,
+        borderTopColor: colors.surface0,
+      },
+      tabBarActiveTintColor: colors.lavender,
+      tabBarInactiveTintColor: colors.overlay,
+    }}
+  >
     <Tab.Screen
       name="Dashboard"
       component={DashboardScreen}

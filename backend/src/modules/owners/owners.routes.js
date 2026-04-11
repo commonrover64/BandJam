@@ -4,6 +4,7 @@ const {
   sendOTPHandler,
   verifyOTPHandler,
   onboardHandler,
+  statusHandler,
 } = require("./owners.controller");
 const authenticate = require("../../middleware/authenticate");
 const requireRole = require("../../middleware/requireRole");
@@ -14,5 +15,6 @@ router.use(authenticate, requireRole("owner"));
 router.post("/send-otp", sendOTPHandler);
 router.post("/verify-otp", verifyOTPHandler);
 router.post("/onboard", onboardHandler);
+router.get("/onboard/status", statusHandler);
 
 module.exports = router;
