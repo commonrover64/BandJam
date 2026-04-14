@@ -9,7 +9,13 @@ const {
 
 const create = async (req, res) => {
   try {
-    const room = await createRoom(req.user.id, req.body);
+    // multer puts file info in req.file
+    // build the public URL for the uploaded image
+    const image_url = req.file
+      ? `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`
+      : null;
+
+    const room = await createRoom(req.user.id, { ...req.body, image_url });
     res.status(201).json({ success: true, room });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });

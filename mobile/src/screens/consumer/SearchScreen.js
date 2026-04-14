@@ -5,20 +5,28 @@ import {
   StyleSheet,
   Alert,
   TouchableOpacity,
+  ScrollView,
 } from "react-native";
-import { Text, ActivityIndicator, Searchbar } from "react-native-paper";
+import { Text, ActivityIndicator } from "react-native-paper";
 import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
 import api from "../../services/api";
 import RoomCard from "../../components/RoomCard";
+import RoomCarousel from "../../components/RoomCarousel";
+import SectionHeader from "../../components/SectionHeader";
+import PaginationBar from "../../components/PaginationBar";
+import LoadingSpinner from "../../components/LoadingSpinner";
 import { colors } from "../../theme/colors";
+
+const PAGE_SIZE = 10;
 
 const SearchScreen = ({ navigation }) => {
   const [rooms, setRooms] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [location, setLocation] = useState(null);
   const [mapRegion, setMapRegion] = useState(null);
-  const [showMap, setShowMap] = useState(false); // toggle map visibility
+  const [showMap, setShowMap] = useState(false);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     const getLocation = async () => {
@@ -49,27 +57,46 @@ const SearchScreen = ({ navigation }) => {
         params: { lat, lng, radius: 10 },
       });
       setRooms(res.data.rooms);
-    } catch (err) {
+      setPage(1);
+    } catch {
       Alert.alert("Error", "Could not fetch rooms");
     } finally {
       setLoading(false);
     }
   };
 
+  const goToRoom = (room) =>
+    navigation.navigate("RoomDetail", { roomId: room.id });
+
+  // pagination slice
+  const totalPages = Math.ceil(rooms.length / PAGE_SIZE);
+  const paginated = rooms.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  // carousel shows first 5 rooms
+  const carouselRooms = rooms.slice(0, 5);
+
+  // grid shows paginated rooms (skip first 5 already shown in carousel)
+  const gridRooms = paginated;
+
+  if (loading) return <LoadingSpinner message="Finding rooms near you..." />;
+
   return (
-    <View style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={false}
+    >
       {/* header */}
       <Text variant="headlineMedium" style={styles.title}>
         Find a Space 🎸
       </Text>
-      <Text variant="bodyMedium" style={styles.subtitle}>
-        {rooms.length} rooms found nearby
-      </Text>
+      <Text style={styles.subtitle}>{rooms.length} rooms near you</Text>
 
-      {/* map toggle button */}
+      {/* map toggle */}
       <TouchableOpacity
         style={styles.mapToggle}
-        onPress={() => setShowMap((prev) => !prev)}
+        onPress={() => setShowMap((p) => !p)}
+        activeOpacity={0.8}
       >
         <Text style={styles.mapToggleText}>
           {showMap ? "🗺 Hide Map" : "🗺 Show Map"}
@@ -91,53 +118,58 @@ const SearchScreen = ({ navigation }) => {
               }}
               title={room.name}
               description={`₹${room.price_per_day}/day`}
-              onCalloutPress={() =>
-                navigation.navigate("RoomDetail", { roomId: room.id })
-              }
+              onCalloutPress={() => goToRoom(room)}
             />
           ))}
         </MapView>
       )}
 
-      {/* room list */}
-      {loading ? (
-        <ActivityIndicator style={{ marginTop: 32 }} color={colors.lavender} />
-      ) : (
-        <FlatList
-          data={rooms}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <RoomCard
-              room={item}
-              onPress={() =>
-                navigation.navigate("RoomDetail", { roomId: item.id })
-              }
-            />
-          )}
-          ListEmptyComponent={
-            <Text style={styles.empty}>No rooms found nearby.</Text>
-          }
-          showsVerticalScrollIndicator={false}
-        />
+      {/* carousel — featured nearby */}
+      {carouselRooms.length > 0 && (
+        <>
+          <SectionHeader title="Featured Nearby" />
+          <RoomCarousel rooms={carouselRooms} onPress={goToRoom} />
+        </>
       )}
-    </View>
+
+      {/* grid listing */}
+      <SectionHeader title="All Rooms" />
+      <View style={styles.grid}>
+        {gridRooms.map((room) => (
+          <RoomCard key={room.id} room={room} onPress={() => goToRoom(room)} />
+        ))}
+      </View>
+
+      {/* pagination */}
+      <PaginationBar
+        page={page}
+        totalPages={totalPages}
+        onPrev={() => setPage((p) => p - 1)}
+        onNext={() => setPage((p) => p + 1)}
+      />
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 24, backgroundColor: colors.base },
+  container: { flex: 1, backgroundColor: colors.base },
+  content: { padding: 24, paddingBottom: 40 },
   title: { fontWeight: "bold", marginTop: 48, color: colors.text },
-  subtitle: { color: colors.subtext, marginBottom: 12 },
+  subtitle: { color: colors.subtext, marginBottom: 16 },
   mapToggle: {
     backgroundColor: colors.surface0,
     padding: 10,
-    borderRadius: 10,
+    borderRadius: 12,
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: 16,
   },
   mapToggleText: { color: colors.lavender, fontWeight: "bold" },
-  map: { height: 200, borderRadius: 12, marginBottom: 16 },
-  empty: { color: colors.overlay, textAlign: "center", marginTop: 48 },
+  map: { height: 200, borderRadius: 16, marginBottom: 20 },
+  grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+  },
 });
 
 export default SearchScreen;

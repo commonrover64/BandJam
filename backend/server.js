@@ -9,8 +9,10 @@ const ownerRoutes = require("./src/modules/owners/owners.routes");
 const roomRoutes = require("./src/modules/rooms/rooms.routes");
 const bookingRoutes = require("./src/modules/bookings/bookings.routes");
 const paymentRoutes = require("./src/modules/payments/payments.routes");
+const path = require("path");
 
 app.use(express.json());
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/owners", ownerRoutes);

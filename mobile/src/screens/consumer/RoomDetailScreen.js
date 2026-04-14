@@ -10,6 +10,8 @@ import { Text, Button, ActivityIndicator } from "react-native-paper";
 import MapView, { Marker } from "react-native-maps";
 import api from "../../services/api";
 import { colors } from "../../theme/colors";
+import { Linking } from "react-native";
+import * as Location from "expo-location";
 
 const RoomDetailScreen = ({ route, navigation }) => {
   const { roomId } = route.params;
@@ -38,6 +40,16 @@ const RoomDetailScreen = ({ route, navigation }) => {
       </View>
     );
   }
+
+  const openDirections = async () => {
+    // get current user location
+    const loc = await Location.getCurrentPositionAsync({});
+    const { latitude, longitude } = loc.coords;
+
+    // build google maps directions URL
+    const url = `https://www.google.com/maps/dir/?api=1&origin=${latitude},${longitude}&destination=${room.lat},${room.lng}&travelmode=driving`;
+    Linking.openURL(url);
+  };
 
   const coordinate = {
     latitude: parseFloat(room.lat),
@@ -68,6 +80,10 @@ const RoomDetailScreen = ({ route, navigation }) => {
       >
         <Marker coordinate={coordinate} title={room.name} />
       </MapView>
+
+      <TouchableOpacity style={styles.directionsBtn} onPress={openDirections}>
+        <Text style={styles.directionsBtnText}>🧭 Get Directions</Text>
+      </TouchableOpacity>
 
       {/* room info */}
       <View style={styles.infoCard}>
@@ -146,6 +162,15 @@ const styles = StyleSheet.create({
   label: { color: colors.subtext, marginTop: 12, fontSize: 12 },
   value: { color: colors.text, marginTop: 2 },
   button: { paddingVertical: 4, marginBottom: 32 },
+
+  directionsBtn: {
+    backgroundColor: colors.blue,
+    padding: 12,
+    borderRadius: 12,
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  directionsBtnText: { color: colors.base, fontWeight: "bold", fontSize: 15 },
 });
 
 export default RoomDetailScreen;

@@ -1,25 +1,38 @@
 import React, { useEffect, useState } from "react";
-import { View, FlatList, StyleSheet, Alert } from "react-native";
-import { Text, Button, ActivityIndicator } from "react-native-paper";
+import {
+  View,
+  ScrollView,
+  StyleSheet,
+  Alert,
+  TouchableOpacity,
+  Linking,
+} from "react-native";
+import { Text, Button, ActivityIndicator, TextInput } from "react-native-paper";
+import MapView, { Marker } from "react-native-maps";
 import api from "../../services/api";
+import BookingCard from "../../components/BookingCard";
+import PaginationBar from "../../components/PaginationBar";
+import SectionHeader from "../../components/SectionHeader";
+import LoadingSpinner from "../../components/LoadingSpinner";
 import { colors } from "../../theme/colors";
 
-const statusColor = (status) => {
-  if (status === "confirmed") return colors.green;
-  if (status === "cancelled") return colors.red;
-  return colors.yellow;
-};
+const PAGE_SIZE = 10;
+
+const FILTERS = ["All", "This Month", "Last Month", "Confirmed", "Cancelled"];
 
 const MyBookingsScreen = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState("All");
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     const fetchBookings = async () => {
       try {
         const res = await api.get("/bookings/consumer/me");
         setBookings(res.data.bookings);
-      } catch (err) {
+      } catch {
         Alert.alert("Error", "Could not fetch bookings");
       } finally {
         setLoading(false);
@@ -32,7 +45,7 @@ const MyBookingsScreen = () => {
     Alert.alert("Cancel Booking", "Are you sure?", [
       { text: "No" },
       {
-        text: "Yes, Cancel",
+        text: "Yes Cancel",
         style: "destructive",
         onPress: async () => {
           try {
@@ -53,112 +66,147 @@ const MyBookingsScreen = () => {
     ]);
   };
 
-  if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={colors.lavender} />
-      </View>
-    );
-  }
+  const openDirections = (room) => {
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${room.lat},${room.lng}&travelmode=driving`;
+    Linking.openURL(url);
+  };
+
+  // apply filters
+  const now = new Date();
+  const filtered = bookings.filter((b) => {
+    const date = new Date(b.booking_date);
+
+    // text search by room name
+    if (search && !b.room_name.toLowerCase().includes(search.toLowerCase()))
+      return false;
+
+    if (filter === "This Month") {
+      return (
+        date.getMonth() === now.getMonth() &&
+        date.getFullYear() === now.getFullYear()
+      );
+    }
+    if (filter === "Last Month") {
+      const last = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      return (
+        date.getMonth() === last.getMonth() &&
+        date.getFullYear() === last.getFullYear()
+      );
+    }
+    if (filter === "Confirmed") return b.status === "confirmed";
+    if (filter === "Cancelled") return b.status === "cancelled";
+    return true;
+  });
+
+  // pagination
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  if (loading) return <LoadingSpinner message="Loading your bookings..." />;
 
   return (
-    <View style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={false}
+    >
       <Text variant="headlineMedium" style={styles.title}>
         My Bookings
       </Text>
-      {bookings.length === 0 ? (
-        <Text style={styles.empty}>No bookings yet.</Text>
+
+      {/* search bar */}
+      <TextInput
+        placeholder="Search by room name..."
+        value={search}
+        onChangeText={(v) => {
+          setSearch(v);
+          setPage(1);
+        }}
+        style={styles.search}
+        left={<TextInput.Icon icon="magnify" color={colors.overlay} />}
+        placeholderTextColor={colors.overlay}
+        theme={{
+          colors: {
+            primary: colors.lavender,
+            onSurfaceVariant: colors.subtext,
+          },
+        }}
+      />
+
+      {/* filter chips */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.filterRow}
+      >
+        {FILTERS.map((f) => (
+          <TouchableOpacity
+            key={f}
+            style={[styles.chip, filter === f && styles.chipActive]}
+            onPress={() => {
+              setFilter(f);
+              setPage(1);
+            }}
+          >
+            <Text
+              style={[styles.chipText, filter === f && styles.chipTextActive]}
+            >
+              {f}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+
+      {/* results */}
+      {paginated.length === 0 ? (
+        <Text style={styles.empty}>No bookings found.</Text>
       ) : (
-        <FlatList
-          data={bookings}
-          keyExtractor={(item) => item.id}
-          showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => (
-            <View style={styles.card}>
-              {/* status pill */}
-              <View
-                style={[
-                  styles.statusPill,
-                  { backgroundColor: statusColor(item.status) },
-                ]}
-              >
-                <Text style={styles.statusText}>{item.status}</Text>
-              </View>
-
-              <Text variant="titleMedium" style={styles.roomName}>
-                {item.room_name}
-              </Text>
-              <Text style={styles.detail}>📍 {item.address}</Text>
-              <Text style={styles.detail}>
-                📅 {new Date(item.booking_date).toDateString()}
-              </Text>
-              <Text style={styles.detail}>💰 ₹{item.total_amount}</Text>
-
-              {/* owner info */}
-              <View style={styles.ownerBox}>
-                <Text style={styles.ownerLabel}>Owner Details</Text>
-                <Text style={styles.detail}>👤 {item.owner_name}</Text>
-                <Text style={styles.detail}>📞 {item.room_phone}</Text>
-              </View>
-
-              {item.status === "pending" && (
-                <Button
-                  mode="outlined"
-                  onPress={() => handleCancel(item.id)}
-                  textColor={colors.red}
-                  style={styles.cancelBtn}
-                >
-                  Cancel Booking
-                </Button>
-              )}
-            </View>
-          )}
-        />
+        paginated.map((booking) => (
+          <BookingCard
+            key={booking.id}
+            booking={booking}
+            onCancel={() => handleCancel(booking.id)}
+            onDirections={() => openDirections(booking)}
+          />
+        ))
       )}
-    </View>
+
+      <PaginationBar
+        page={page}
+        totalPages={totalPages}
+        onPrev={() => setPage((p) => p - 1)}
+        onNext={() => setPage((p) => p + 1)}
+      />
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 24, backgroundColor: colors.base },
+  container: { flex: 1, backgroundColor: colors.base },
+  content: { padding: 24, paddingBottom: 40 },
   title: {
     fontWeight: "bold",
-    marginBottom: 16,
     marginTop: 48,
     color: colors.text,
+    marginBottom: 16,
   },
-  card: {
+  search: {
     backgroundColor: colors.surface0,
-    borderRadius: 12,
-    padding: 16,
     marginBottom: 12,
+    borderRadius: 12,
   },
-  statusPill: {
-    alignSelf: "flex-start",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+  filterRow: { marginBottom: 16 },
+  chip: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
     borderRadius: 20,
-    marginBottom: 8,
+    backgroundColor: colors.surface0,
+    marginRight: 8,
   },
-  statusText: { color: colors.base, fontSize: 12, fontWeight: "bold" },
-  roomName: { color: colors.text, fontWeight: "bold", marginBottom: 8 },
-  detail: { color: colors.subtext, marginBottom: 4 },
-  ownerBox: {
-    backgroundColor: colors.surface1,
-    borderRadius: 8,
-    padding: 12,
-    marginTop: 8,
-    marginBottom: 8,
-  },
-  ownerLabel: { color: colors.lavender, fontWeight: "bold", marginBottom: 6 },
-  cancelBtn: { marginTop: 8, borderColor: colors.red },
+  chipActive: { backgroundColor: colors.lavender },
+  chipText: { color: colors.subtext, fontSize: 13 },
+  chipTextActive: { color: colors.base, fontWeight: "bold" },
   empty: { color: colors.overlay, textAlign: "center", marginTop: 48 },
-  center: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: colors.base,
-  },
 });
 
 export default MyBookingsScreen;

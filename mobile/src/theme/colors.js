@@ -26,4 +26,12 @@ export const colors = {
   red: "#ed8796", // error/cancel
   pink: "#f5bde6", // soft accent
   mauve: "#c6a0f6", // purple accent
+
+  // glass and gradient tones
+  glass: "rgba(54, 58, 79, 0.6)",
+  glassStrong: "rgba(36, 39, 58, 0.85)",
+  gradientStart: "#363a4f",
+  gradientEnd: "#24273a",
+  white: "#ffffff",
+  black: "#000000",
 };

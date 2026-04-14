@@ -10,6 +10,7 @@ const {
 } = require("./rooms.controller");
 const authenticate = require("../../middleware/authenticate");
 const requireRole = require("../../middleware/requireRole");
+const upload = require("../../config/upload");
 
 router.get("/search", search);
 
@@ -17,8 +18,20 @@ router.get("/search", search);
 router.get("/:id", getOne); // fetches one specific room by its UUID
 
 // owner only
-router.post("/", authenticate, requireRole("owner"), create);
-router.patch("/:id", authenticate, requireRole("owner"), update);
+router.post(
+  "/",
+  authenticate,
+  requireRole("owner"),
+  upload.single("image"),
+  create,
+);
+router.patch(
+  "/:id",
+  authenticate,
+  requireRole("owner"),
+  upload.single("image"),
+  update,
+);
 router.delete("/:id", authenticate, requireRole("owner"), remove);
 router.get("/owner/me", authenticate, requireRole("owner"), myRooms); // fetches all rooms belonging to the logged in owner
 

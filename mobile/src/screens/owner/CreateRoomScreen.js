@@ -1,10 +1,12 @@
 import React, { useState } from "react";
-import { View, StyleSheet, Alert, ScrollView } from "react-native";
+import { View, StyleSheet, Alert, ScrollView, TouchableOpacity } from "react-native";
 import { Text, TextInput, Button } from "react-native-paper";
 import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
 import api from "../../services/api";
 import { colors } from "../../theme/colors";
+import * as ImagePicker from "expo-image-picker";
+import { Image } from "react-native";
 
 const CreateRoomScreen = () => {
   const [name, setName] = useState("");
@@ -13,6 +15,7 @@ const CreateRoomScreen = () => {
   const [phone, setPhone] = useState("");
   const [price, setPrice] = useState("");
   const [loading, setLoading] = useState(false);
+  const [image, setImage] = useState(null);
 
   // default map location — India center, user can drag pin
   const [location, setLocation] = useState({
@@ -20,28 +23,61 @@ const CreateRoomScreen = () => {
     longitude: 78.9629,
   });
 
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+        "Permission needed",
+        "Allow photo access to upload room image",
+      );
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [16, 9],
+      quality: 0.8,
+    });
+
+    if (!result.canceled) setImage(result.assets[0]);
+  };
+
   const handleCreate = async () => {
     if (!name || !address || !phone || !price) {
       return Alert.alert("Error", "Please fill in all required fields");
     }
     try {
       setLoading(true);
-      await api.post("/rooms", {
-        name,
-        description,
-        address,
-        phone,
-        price_per_day: parseFloat(price),
-        lat: location.latitude,
-        lng: location.longitude,
+
+      // use FormData because we're sending an image file
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("description", description);
+      formData.append("address", address);
+      formData.append("phone", phone);
+      formData.append("price_per_day", price);
+      formData.append("lat", location.latitude.toString());
+      formData.append("lng", location.longitude.toString());
+
+      if (image) {
+        formData.append("image", {
+          uri: image.uri,
+          name: "room.jpg",
+          type: "image/jpeg",
+        });
+      }
+
+      await api.post("/rooms", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
+
       Alert.alert("Success", "Room listed successfully!");
-      // reset form
       setName("");
       setDescription("");
       setAddress("");
       setPhone("");
       setPrice("");
+      setImage(null);
     } catch (err) {
       Alert.alert(
         "Error",
@@ -95,6 +131,16 @@ const CreateRoomScreen = () => {
         keyboardType="numeric"
         style={styles.input}
       />
+
+      {/* image picker */}
+      <Text style={styles.mapLabel}>Room Photo</Text>
+      <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>
+        {image ? (
+          <Image source={{ uri: image.uri }} style={styles.imagePreview} />
+        ) : (
+          <Text style={styles.imagePickerText}>📷 Tap to add photo</Text>
+        )}
+      </TouchableOpacity>
 
       {/* map pin drop for location */}
       <Text variant="bodyMedium" style={styles.mapLabel}>

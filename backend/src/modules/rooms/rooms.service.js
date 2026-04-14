@@ -2,14 +2,23 @@ const pool = require("../../config/db");
 
 const createRoom = async (
   ownerId,
-  { name, description, address, lat, lng, phone, price_per_day },
+  { name, description, address, lat, lng, phone, price_per_day, image_url },
 ) => {
   const { rows } = await pool.query(
-    `INSERT INTO rooms (owner_id, name, description, address, location, phone, price_per_day)
-     VALUES ($1, $2, $3, $4, ST_SetSRID(ST_MakePoint($5, $6), 4326), $7, $8)
-     RETURNING id, name, description, address, phone, price_per_day, is_active, created_at`,
-    [ownerId, name, description, address, lng, lat, phone, price_per_day],
-    //                                         ^ PostGIS takes lng first, then lat
+    `INSERT INTO rooms (owner_id, name, description, address, location, phone, price_per_day, image_url)
+     VALUES ($1, $2, $3, $4, ST_SetSRID(ST_MakePoint($5, $6), 4326), $7, $8, $9)
+     RETURNING id, name, description, address, phone, price_per_day, is_active, image_url, created_at`,
+    [
+      ownerId,
+      name,
+      description,
+      address,
+      lng,
+      lat,
+      phone,
+      price_per_day,
+      image_url || null,
+    ],
   );
   return rows[0];
 };
@@ -17,7 +26,7 @@ const createRoom = async (
 const getRoomById = async (id) => {
   const { rows } = await pool.query(
     `SELECT r.id, r.owner_id, r.name, r.description, r.address,
-            r.phone, r.price_per_day, r.is_active, r.created_at,
+            r.phone, r.price_per_day, r.is_active, r.image_url, r.created_at,
             ST_Y(r.location::geometry) AS lat,
             ST_X(r.location::geometry) AS lng,
             u.name AS owner_name
@@ -91,7 +100,7 @@ const deleteRoom = async (ownerId, roomId) => {
 
 const getOwnerRooms = async (ownerId) => {
   const { rows } = await pool.query(
-    `SELECT id, name, description, address, phone, price_per_day, is_active, created_at,
+    `SELECT id, name, description, address, phone, price_per_day, is_active, image_url, created_at,
             ST_Y(location::geometry) AS lat,
             ST_X(location::geometry) AS lng
      FROM rooms WHERE owner_id = $1 ORDER BY created_at DESC`,
@@ -108,46 +117,54 @@ const searchRooms = async ({
   maxPrice,
   sortBy = "distance",
 }) => {
-  // radius is in km, ST_DWithin expects meters so multiply by 1000
   const radiusInMeters = radius * 1000;
 
-  // base query — find all active rooms within radius
-  let query = `
-    SELECT
-      id, name, description, address, phone, price_per_day, is_active,
-      ST_Y(location::geometry) AS lat,
-      ST_X(location::geometry) AS lng,
-      -- calculate distance in km from search point to room
-      ROUND((ST_Distance(location, ST_SetSRID(ST_MakePoint($2, $1), 4326)) / 1000)::numeric, 2) AS distance_km
-    FROM rooms
-    WHERE is_active = TRUE
-    AND ST_DWithin(
-      location,
-      ST_SetSRID(ST_MakePoint($2, $1), 4326),
-      $3
-    )
-  `;
-
   const params = [lat, lng, radiusInMeters];
-  let paramIndex = 4; // next param index after lat, lng, radius
+  let paramIndex = 4;
 
-  // optional price filters
+  let priceFilter = "";
+
   if (minPrice) {
-    query += ` AND price_per_day >= $${paramIndex}`;
+    priceFilter += ` AND price_per_day >= $${paramIndex}`;
     params.push(minPrice);
     paramIndex++;
   }
 
   if (maxPrice) {
-    query += ` AND price_per_day <= $${paramIndex}`;
+    priceFilter += ` AND price_per_day <= $${paramIndex}`;
     params.push(maxPrice);
     paramIndex++;
   }
 
-  // sort by distance or price
-  if (sortBy === "price_asc") query += " ORDER BY price_per_day ASC";
-  else if (sortBy === "price_desc") query += " ORDER BY price_per_day DESC";
-  else query += " ORDER BY distance_km ASC"; // default sort by nearest
+  const sortClause =
+    sortBy === "price_asc"
+      ? "ORDER BY price_per_day ASC"
+      : sortBy === "price_desc"
+        ? "ORDER BY price_per_day DESC"
+        : "ORDER BY distance_km ASC";
+
+  const query = `
+    SELECT
+      id, name, description, address, phone,
+      price_per_day, is_active, image_url,
+      ST_Y(location::geometry) AS lat,
+      ST_X(location::geometry) AS lng,
+      ROUND(
+        (ST_Distance(
+          location::geography,
+          ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography
+        ) / 1000)::numeric, 2
+      ) AS distance_km
+    FROM rooms
+    WHERE is_active = TRUE
+    AND ST_DWithin(
+      location::geography,
+      ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography,
+      $3
+    )
+    ${priceFilter}
+    ${sortClause}
+  `;
 
   const { rows } = await pool.query(query, params);
   return rows;

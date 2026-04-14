@@ -55,7 +55,9 @@ const getBookingById = async (id, userId) => {
 const getConsumerBookings = async (consumerId) => {
   const { rows } = await pool.query(
     `SELECT b.*, r.name AS room_name, r.address, r.phone AS room_phone,
-            u.name AS owner_name
+            u.name AS owner_name,
+            ST_Y(r.location::geometry) AS lat,
+            ST_X(r.location::geometry) AS lng
      FROM bookings b
      JOIN rooms r ON b.room_id = r.id
      JOIN users u ON r.owner_id = u.id
