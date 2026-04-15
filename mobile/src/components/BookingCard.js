@@ -10,7 +10,7 @@ const statusColor = (status) => {
   return colors.yellow;
 };
 
-const BookingCard = ({ booking, onCancel, onDirections }) => {
+const BookingCard = ({ booking, onCancel, onDirections, onRebook }) => {
   const [showMap, setShowMap] = useState(false);
 
   const hasLocation = booking.lat && booking.lng;
@@ -75,6 +75,12 @@ const BookingCard = ({ booking, onCancel, onDirections }) => {
             <Text style={styles.directionsBtnText}>🧭 Get Directions</Text>
           </TouchableOpacity>
         </>
+      )}
+
+      {booking.status !== "pending" && onRebook && (
+        <TouchableOpacity style={styles.rebookBtn} onPress={onRebook}>
+          <Text style={styles.rebookText}>🔄 Rebook This Room</Text>
+        </TouchableOpacity>
       )}
 
       {/* cancel button */}
@@ -146,6 +152,14 @@ const styles = StyleSheet.create({
   },
   directionsBtnText: { color: colors.base, fontWeight: "bold" },
   cancelBtn: { marginTop: 4, borderColor: colors.red },
+  rebookBtn: {
+    backgroundColor: colors.surface1,
+    padding: 10,
+    borderRadius: 10,
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  rebookText: { color: colors.lavender, fontWeight: "bold" },
 });
 
 export default BookingCard;

@@ -15,6 +15,7 @@ import PaginationBar from "../../components/PaginationBar";
 import SectionHeader from "../../components/SectionHeader";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import { colors } from "../../theme/colors";
+import { useNavigation } from "@react-navigation/native";
 
 const PAGE_SIZE = 10;
 
@@ -26,6 +27,7 @@ const MyBookingsScreen = () => {
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const navigation = useNavigation();
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -167,6 +169,21 @@ const MyBookingsScreen = () => {
             booking={booking}
             onCancel={() => handleCancel(booking.id)}
             onDirections={() => openDirections(booking)}
+            onRebook={() =>
+              navigation.navigate("Home", {
+                screen: "Booking",
+                params: {
+                  room: {
+                    id: booking.room_id,
+                    name: booking.room_name,
+                    address: booking.address,
+                    price_per_day: booking.total_amount,
+                    lat: booking.lat,
+                    lng: booking.lng,
+                  },
+                },
+              })
+            }
           />
         ))
       )}

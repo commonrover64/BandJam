@@ -99,10 +99,29 @@ const cancelBooking = async (userId, bookingId) => {
   return updated[0];
 };
 
+const getRecentlyBookedRooms = async (consumerId) => {
+  // get last 5 distinct rooms this consumer booked
+  const { rows } = await pool.query(
+    `SELECT DISTINCT ON (r.id)
+      r.id, r.name, r.address, r.phone, r.price_per_day, r.image_url,
+      ST_Y(r.location::geometry) AS lat,
+      ST_X(r.location::geometry) AS lng,
+      b.booking_date, b.status
+     FROM bookings b
+     JOIN rooms r ON b.room_id = r.id
+     WHERE b.consumer_id = $1
+     ORDER BY r.id, b.created_at DESC
+     LIMIT 5`,
+    [consumerId],
+  );
+  return rows;
+};
+
 module.exports = {
   createBooking,
   getBookingById,
   getConsumerBookings,
   getOwnerBookings,
   cancelBooking,
+  getRecentlyBookedRooms,
 };

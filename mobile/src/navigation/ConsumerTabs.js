@@ -6,6 +6,7 @@ import SearchScreen from "../screens/consumer/SearchScreen";
 import MyBookingsScreen from "../screens/consumer/MyBookingsScreen";
 import RoomDetailScreen from "../screens/consumer/RoomDetailScreen";
 import BookingScreen from "../screens/consumer/BookingScreen";
+import MapExploreScreen from "../screens/consumer/MapExploreScreen";
 import ProfileScreen from "../screens/shared/ProfileScreen";
 import { colors } from "../theme/colors";
 
@@ -17,6 +18,7 @@ const SearchStack = () => (
     <Stack.Screen name="SearchMain" component={SearchScreen} />
     <Stack.Screen name="RoomDetail" component={RoomDetailScreen} />
     <Stack.Screen name="Booking" component={BookingScreen} />
+    <Stack.Screen name="Profile" component={ProfileScreen} />
   </Stack.Navigator>
 );
 
@@ -33,11 +35,20 @@ const ConsumerTabs = () => (
     }}
   >
     <Tab.Screen
-      name="Search"
+      name="Home"
       component={SearchStack}
       options={{
         tabBarIcon: ({ color }) => (
-          <MaterialCommunityIcons name="magnify" size={24} color={color} />
+          <MaterialCommunityIcons name="home" size={24} color={color} />
+        ),
+      }}
+    />
+    <Tab.Screen
+      name="Map"
+      component={MapExploreScreen}
+      options={{
+        tabBarIcon: ({ color }) => (
+          <MaterialCommunityIcons name="map" size={24} color={color} />
         ),
       }}
     />
@@ -51,15 +62,6 @@ const ConsumerTabs = () => (
             size={24}
             color={color}
           />
-        ),
-      }}
-    />
-    <Tab.Screen
-      name="Profile"
-      component={ProfileScreen}
-      options={{
-        tabBarIcon: ({ color }) => (
-          <MaterialCommunityIcons name="account" size={24} color={color} />
         ),
       }}
     />

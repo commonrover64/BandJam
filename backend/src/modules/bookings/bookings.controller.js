@@ -51,4 +51,20 @@ const cancel = async (req, res) => {
   }
 };
 
-module.exports = { create, getOne, myBookings, ownerBookings, cancel };
+const recentRooms = async (req, res) => {
+  try {
+    const rooms = await getRecentlyBookedRooms(req.user.id);
+    res.status(200).json({ success: true, rooms });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+module.exports = {
+  create,
+  getOne,
+  myBookings,
+  ownerBookings,
+  cancel,
+  recentRooms,
+};
