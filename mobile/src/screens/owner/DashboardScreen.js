@@ -4,24 +4,28 @@ import { Text, ActivityIndicator } from "react-native-paper";
 import api from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
 import { colors } from "../../theme/colors";
+import { useFocusEffect } from "@react-navigation/native";
+import { useCallback } from "react";
 
 const DashboardScreen = () => {
   const { user } = useAuth();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchBookings = async () => {
-      try {
-        const res = await api.get("/bookings/owner/me");
-        setBookings(res.data.bookings);
-      } catch {
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchBookings();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      const fetchBookings = async () => {
+        try {
+          const res = await api.get("/bookings/owner/me");
+          setBookings(res.data.bookings);
+        } catch {
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchBookings();
+    }, []),
+  );
 
   // filter this week's bookings
   const now = new Date();

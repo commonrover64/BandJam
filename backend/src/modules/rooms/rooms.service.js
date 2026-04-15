@@ -4,6 +4,14 @@ const createRoom = async (
   ownerId,
   { name, description, address, lat, lng, phone, price_per_day, image_url },
 ) => {
+  // parse explicitly — postman sends strings, app sends numbers
+  const parsedLat = parseFloat(lat);
+  const parsedLng = parseFloat(lng);
+
+  if (isNaN(parsedLat) || isNaN(parsedLng)) {
+    throw new Error("Invalid coordinates");
+  }
+
   const { rows } = await pool.query(
     `INSERT INTO rooms (owner_id, name, description, address, location, phone, price_per_day, image_url)
      VALUES ($1, $2, $3, $4, ST_SetSRID(ST_MakePoint($5, $6), 4326), $7, $8, $9)

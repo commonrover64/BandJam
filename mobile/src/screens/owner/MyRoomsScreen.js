@@ -15,6 +15,8 @@ import {
 } from "react-native-paper";
 import api from "../../services/api";
 import { colors } from "../../theme/colors";
+import { useFocusEffect } from "@react-navigation/native";
+import { useCallback } from "react";
 
 const MyRoomsScreen = () => {
   const [rooms, setRooms] = useState([]);
@@ -31,10 +33,11 @@ const MyRoomsScreen = () => {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchRooms();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchRooms();
+    }, []),
+  );
 
   const handleDelete = async (id) => {
     Alert.alert("Delete Room", "Are you sure?", [

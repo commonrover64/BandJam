@@ -10,6 +10,7 @@ const {
 } = require("./rooms.controller");
 const authenticate = require("../../middleware/authenticate");
 const requireRole = require("../../middleware/requireRole");
+const requireVerified = require("../../middleware/requireVerified");
 const upload = require("../../config/upload");
 
 router.get("/search", search);
@@ -22,6 +23,7 @@ router.post(
   "/",
   authenticate,
   requireRole("owner"),
+  requireVerified,
   upload.single("image"),
   create,
 );
