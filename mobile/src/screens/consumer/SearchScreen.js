@@ -51,7 +51,7 @@ const SearchScreen = () => {
     try {
       setLoading(true);
       const res = await api.get("/rooms/search", {
-        params: { lat, lng, radius: 10 },
+        params: { lat, lng, radius: 50 },
       });
       setRooms(res.data.rooms);
       setPage(1);
