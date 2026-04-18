@@ -14,18 +14,18 @@ import * as Location from "expo-location";
 import api from "../../services/api";
 import { colors } from "../../theme/colors";
 
+const MAX_PHOTOS = 3;
+
 const CreateRoomScreen = () => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
   const [price, setPrice] = useState("");
-  const [image, setImage] = useState(null);
+  const [images, setImages] = useState([]); // array of up to 3 image assets
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
-
-  // address mode: 'text' or 'map'
-  const [addressMode, setAddressMode] = useState("text");
+  const [addressMode, setAddressMode] = useState("text"); // 'text' | 'map'
   const [location, setLocation] = useState({
     latitude: 20.5937,
     longitude: 78.9629,
@@ -41,7 +41,11 @@ const CreateRoomScreen = () => {
     return Object.keys(e).length === 0;
   };
 
-  const pickImage = async () => {
+  const pickFromGallery = async () => {
+    if (images.length >= MAX_PHOTOS) {
+      Alert.alert("Limit reached", `You can upload up to ${MAX_PHOTOS} photos`);
+      return;
+    }
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
       Alert.alert(
@@ -51,18 +55,24 @@ const CreateRoomScreen = () => {
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ["images"],
       allowsEditing: true,
       aspect: [16, 9],
       quality: 0.8,
     });
-    if (!result.canceled) setImage(result.assets[0]);
+    if (!result.canceled) {
+      setImages((prev) => [...prev, result.assets[0]]);
+    }
   };
 
   const takePhoto = async () => {
+    if (images.length >= MAX_PHOTOS) {
+      Alert.alert("Limit reached", `You can upload up to ${MAX_PHOTOS} photos`);
+      return;
+    }
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== "granted") {
-      Alert.alert("Permission needed", "Allow camera access to take a photo");
+      Alert.alert("Permission needed", "Allow camera access");
       return;
     }
     const result = await ImagePicker.launchCameraAsync({
@@ -70,20 +80,30 @@ const CreateRoomScreen = () => {
       aspect: [16, 9],
       quality: 0.8,
     });
-    if (!result.canceled) setImage(result.assets[0]);
+    if (!result.canceled) {
+      setImages((prev) => [...prev, result.assets[0]]);
+    }
+  };
+
+  const removeImage = (index) => {
+    setImages((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleMapPress = async (e) => {
     const coords = e.nativeEvent.coordinate;
     setLocation(coords);
-    // reverse geocode to fill address
-    const result = await Location.reverseGeocodeAsync(coords);
-    if (result.length > 0) {
-      const r = result[0];
-      const readable = [r.name, r.street, r.district, r.city, r.region]
-        .filter(Boolean)
-        .join(", ");
-      setAddress(readable);
+    try {
+      const result = await Location.reverseGeocodeAsync(coords);
+      if (result.length > 0) {
+        const r = result[0];
+        const readable = [r.name, r.street, r.district, r.city, r.region]
+          .filter(Boolean)
+          .join(", ");
+        setAddress(readable);
+        setErrors((prev) => ({ ...prev, address: null }));
+      }
+    } catch {
+      // silently fail — user can type address manually
     }
   };
 
@@ -91,6 +111,7 @@ const CreateRoomScreen = () => {
     if (!validate()) return;
     try {
       setLoading(true);
+
       const formData = new FormData();
       formData.append("name", name);
       formData.append("description", description);
@@ -99,27 +120,28 @@ const CreateRoomScreen = () => {
       formData.append("price_per_day", price);
       formData.append("lat", location.latitude.toString());
       formData.append("lng", location.longitude.toString());
-
-      if (image) {
-        formData.append("image", {
-          uri: image.uri,
-          name: "room.jpg",
+      // append all selected images
+      images.forEach((img, index) => {
+        formData.append("images", {
+          uri: img.uri,
+          name: `room_${index + 1}.jpg`,
           type: "image/jpeg",
         });
-      }
+      });
 
       await api.post("/rooms", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
       Alert.alert("Success 🎉", "Room listed successfully!");
+
       // reset form
       setName("");
       setDescription("");
       setAddress("");
       setPhone("");
       setPrice("");
-      setImage(null);
+      setImages([]);
       setErrors({});
     } catch (err) {
       Alert.alert(
@@ -143,42 +165,60 @@ const CreateRoomScreen = () => {
       </Text>
       <Text style={styles.subtitle}>Fill in your practice space details</Text>
 
-      {/* image picker section */}
-      <Text style={styles.label}>Room Photo</Text>
-      <TouchableOpacity
-        style={styles.imagePicker}
-        onPress={pickImage}
-        activeOpacity={0.85}
-      >
-        {image ? (
-          <Image source={{ uri: image.uri }} style={styles.imagePreview} />
-        ) : (
-          <View style={styles.imagePlaceholder}>
-            <Text style={styles.imageIcon}>🖼</Text>
-            <Text style={styles.imageHint}>Tap to pick from gallery</Text>
-          </View>
-        )}
-      </TouchableOpacity>
+      {/* photo section */}
+      <Text style={styles.label}>
+        Room Photos ({images.length}/{MAX_PHOTOS})
+      </Text>
 
-      {/* camera option */}
-      <View style={styles.imageOptions}>
-        <TouchableOpacity style={styles.imageOptionBtn} onPress={pickImage}>
-          <Text style={styles.imageOptionText}>📷 Gallery</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.imageOptionBtn} onPress={takePhoto}>
-          <Text style={styles.imageOptionText}>📸 Camera</Text>
-        </TouchableOpacity>
-        {image && (
-          <TouchableOpacity
-            style={[styles.imageOptionBtn, { borderColor: colors.red }]}
-            onPress={() => setImage(null)}
-          >
-            <Text style={[styles.imageOptionText, { color: colors.red }]}>
-              ✕ Remove
-            </Text>
+      {/* photo previews */}
+      {images.length > 0 && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.previewRow}
+        >
+          {images.map((img, index) => (
+            <View key={index} style={styles.previewWrapper}>
+              <Image source={{ uri: img.uri }} style={styles.previewImage} />
+              {/* remove button */}
+              <TouchableOpacity
+                style={styles.removeBtn}
+                onPress={() => removeImage(index)}
+              >
+                <Text style={styles.removeBtnText}>✕</Text>
+              </TouchableOpacity>
+              {/* first photo badge */}
+              {index === 0 && (
+                <View style={styles.mainBadge}>
+                  <Text style={styles.mainBadgeText}>Main</Text>
+                </View>
+              )}
+            </View>
+          ))}
+        </ScrollView>
+      )}
+
+      {/* add photo buttons — hide when max reached */}
+      {images.length < MAX_PHOTOS && (
+        <View style={styles.photoActions}>
+          <TouchableOpacity style={styles.photoBtn} onPress={pickFromGallery}>
+            <Text style={styles.photoBtnIcon}>🖼</Text>
+            <Text style={styles.photoBtnText}>Gallery</Text>
           </TouchableOpacity>
-        )}
-      </View>
+          <TouchableOpacity style={styles.photoBtn} onPress={takePhoto}>
+            <Text style={styles.photoBtnIcon}>📸</Text>
+            <Text style={styles.photoBtnText}>Camera</Text>
+          </TouchableOpacity>
+          {/* empty slot indicators */}
+          {Array.from({ length: MAX_PHOTOS - images.length - 1 }).map(
+            (_, i) => (
+              <View key={i} style={styles.emptySlot}>
+                <Text style={styles.emptySlotText}>+</Text>
+              </View>
+            ),
+          )}
+        </View>
+      )}
 
       {/* room details */}
       <Text style={styles.label}>Room Details</Text>
@@ -254,8 +294,10 @@ const CreateRoomScreen = () => {
       />
       {errors.price && <Text style={styles.errorText}>{errors.price}</Text>}
 
-      {/* address section — toggle between text and map */}
+      {/* location section */}
       <Text style={styles.label}>Location</Text>
+
+      {/* toggle — text or map */}
       <View style={styles.addressToggle}>
         <TouchableOpacity
           style={[
@@ -292,7 +334,6 @@ const CreateRoomScreen = () => {
       </View>
 
       {addressMode === "text" ? (
-        // text input mode
         <>
           <TextInput
             label="Full Address"
@@ -314,16 +355,12 @@ const CreateRoomScreen = () => {
             <Text style={styles.errorText}>{errors.address}</Text>
           )}
           <Text style={styles.hint}>
-            💡 Coordinates will use map center. Switch to map to pin exact
-            location.
+            💡 Switch to map mode to pin exact coordinates
           </Text>
         </>
       ) : (
-        // map pin mode
         <>
-          <Text style={styles.hint}>
-            Tap on the map to drop a pin. Address auto fills.
-          </Text>
+          <Text style={styles.hint}>Tap on the map to drop a pin</Text>
           <MapView
             style={styles.map}
             initialRegion={{
@@ -342,7 +379,10 @@ const CreateRoomScreen = () => {
           {address ? (
             <Text style={styles.autoAddress}>✅ {address}</Text>
           ) : (
-            <Text style={styles.hint}>Tap map to get address</Text>
+            <Text style={styles.hint}>Tap map to auto fill address</Text>
+          )}
+          {errors.address && (
+            <Text style={styles.errorText}>{errors.address}</Text>
           )}
         </>
       )}
@@ -371,38 +411,78 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   subtitle: { color: colors.subtext, marginBottom: 24 },
-  label: { color: colors.subtext, fontSize: 12, marginBottom: 8, marginTop: 8 },
+  label: {
+    color: colors.subtext,
+    fontSize: 12,
+    marginBottom: 8,
+    marginTop: 16,
+  },
 
-  // image picker
-  imagePicker: {
-    height: 180,
-    backgroundColor: colors.surface0,
-    borderRadius: 16,
+  // photo section
+  previewRow: { marginBottom: 12 },
+  previewWrapper: {
+    width: 110,
+    height: 80,
+    borderRadius: 12,
     overflow: "hidden",
-    marginBottom: 10,
+    marginRight: 10,
+    position: "relative",
+  },
+  previewImage: { width: "100%", height: "100%" },
+  removeBtn: {
+    position: "absolute",
+    top: 4,
+    right: 4,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  removeBtnText: { color: colors.white, fontSize: 10, fontWeight: "bold" },
+  mainBadge: {
+    position: "absolute",
+    bottom: 4,
+    left: 4,
+    backgroundColor: colors.lavender,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  mainBadgeText: { color: colors.base, fontSize: 9, fontWeight: "bold" },
+
+  photoActions: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 20,
+  },
+  photoBtn: {
+    flex: 1,
+    backgroundColor: colors.surface0,
+    borderRadius: 12,
+    padding: 14,
+    alignItems: "center",
+    gap: 4,
     borderWidth: 1,
     borderColor: colors.surface2,
     borderStyle: "dashed",
   },
-  imagePreview: { width: "100%", height: "100%" },
-  imagePlaceholder: {
+  photoBtnIcon: { fontSize: 22 },
+  photoBtnText: { color: colors.subtext, fontSize: 12 },
+  emptySlot: {
     flex: 1,
-    justifyContent: "center",
+    backgroundColor: colors.surface0,
+    borderRadius: 12,
+    padding: 14,
     alignItems: "center",
-    gap: 8,
-  },
-  imageIcon: { fontSize: 36 },
-  imageHint: { color: colors.overlay, fontSize: 13 },
-  imageOptions: { flexDirection: "row", gap: 8, marginBottom: 20 },
-  imageOptionBtn: {
-    flex: 1,
-    padding: 10,
-    borderRadius: 10,
+    justifyContent: "center",
     borderWidth: 1,
     borderColor: colors.surface2,
-    alignItems: "center",
+    borderStyle: "dashed",
+    opacity: 0.4,
   },
-  imageOptionText: { color: colors.subtext, fontSize: 13 },
+  emptySlotText: { color: colors.overlay, fontSize: 22 },
 
   // form
   input: { marginBottom: 4, backgroundColor: colors.surface0 },

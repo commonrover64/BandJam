@@ -124,14 +124,17 @@ const SearchScreen = () => {
 
       {/* recently booked carousel */}
       {recentRooms.length > 0 && (
-        <>
+        <View style={{ paddingHorizontal: 24 }}>
           <SectionHeader title="Recently Booked" />
           <RoomCarousel rooms={recentRooms} onPress={goToRoom} />
-        </>
+        </View>
       )}
 
       {/* all rooms grid */}
-      <SectionHeader title="Nearby Rooms" />
+      <RoomCarousel rooms={recentRooms} onPress={goToRoom} />
+      <View style={{ paddingHorizontal: 24 }}>
+        <SectionHeader title="Nearby Rooms" />
+      </View>
       <View style={styles.grid}>
         {paginated.map((room) => (
           <RoomCard key={room.id} room={room} onPress={() => goToRoom(room)} />
@@ -151,35 +154,39 @@ const SearchScreen = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.base },
-  content: { padding: 24, paddingBottom: 40 },
+  content: { paddingBottom: 40 },
   headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginTop: 48,
-    marginBottom: 16,
+    paddingHorizontal: 24,
+    paddingTop: 56,
+    paddingBottom: 8,
   },
-  title: { fontWeight: "bold", color: colors.text },
-  subtitle: { color: colors.subtext, marginTop: 2 },
+  title: { fontWeight: "bold", color: colors.text, fontSize: 28 },
+  subtitle: { color: colors.subtext, marginTop: 2, fontSize: 13 },
   profileBtn: {
     backgroundColor: colors.surface0,
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     justifyContent: "center",
     alignItems: "center",
   },
-  profileEmoji: { fontSize: 18 },
+  profileEmoji: { fontSize: 16 },
   searchbar: {
     backgroundColor: colors.surface0,
-    marginBottom: 20,
+    marginHorizontal: 24,
+    marginBottom: 24,
     borderRadius: 14,
     elevation: 0,
+    height: 46,
   },
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
+    paddingHorizontal: 24,
   },
 });
 

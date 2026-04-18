@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { View, StyleSheet, TouchableOpacity } from "react-native";
 import { Text, Button } from "react-native-paper";
 import MapView, { Marker } from "react-native-maps";
+import { useNavigation } from "@react-navigation/native";
 import { colors } from "../theme/colors";
 
 const statusColor = (status) => {
@@ -12,7 +13,7 @@ const statusColor = (status) => {
 
 const BookingCard = ({ booking, onCancel, onDirections, onRebook }) => {
   const [showMap, setShowMap] = useState(false);
-
+  const navigation = useNavigation();
   const hasLocation = booking.lat && booking.lng;
 
   return (
@@ -24,7 +25,18 @@ const BookingCard = ({ booking, onCancel, onDirections, onRebook }) => {
         <Text style={styles.pillText}>{booking.status}</Text>
       </View>
 
-      <Text style={styles.roomName}>{booking.room_name}</Text>
+      {/* tapping room name goes to room detail */}
+      <TouchableOpacity
+        onPress={() =>
+          navigation.navigate("Home", {
+            screen: "RoomDetail",
+            params: { roomId: booking.room_id },
+          })
+        }
+      >
+        <Text style={styles.roomName}>{booking.room_name} →</Text>
+      </TouchableOpacity>
+
       <Text style={styles.detail}>
         📅 {new Date(booking.booking_date).toDateString()}
       </Text>
@@ -77,14 +89,15 @@ const BookingCard = ({ booking, onCancel, onDirections, onRebook }) => {
         </>
       )}
 
+      {/* rebook */}
       {booking.status !== "pending" && onRebook && (
         <TouchableOpacity style={styles.rebookBtn} onPress={onRebook}>
           <Text style={styles.rebookText}>🔄 Rebook This Room</Text>
         </TouchableOpacity>
       )}
 
-      {/* cancel button */}
-      {booking.status === "pending" && (
+      {/* cancel — allowed anytime except already cancelled */}
+      {booking.status !== "cancelled" && (
         <Button
           mode="outlined"
           onPress={onCancel}
@@ -114,7 +127,7 @@ const styles = StyleSheet.create({
   },
   pillText: { color: colors.base, fontSize: 11, fontWeight: "bold" },
   roomName: {
-    color: colors.text,
+    color: colors.lavender,
     fontWeight: "bold",
     fontSize: 16,
     marginBottom: 8,
@@ -151,7 +164,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   directionsBtnText: { color: colors.base, fontWeight: "bold" },
-  cancelBtn: { marginTop: 4, borderColor: colors.red },
   rebookBtn: {
     backgroundColor: colors.surface1,
     padding: 10,
@@ -160,6 +172,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   rebookText: { color: colors.lavender, fontWeight: "bold" },
+  cancelBtn: { marginTop: 4, borderColor: colors.red },
 });
 
 export default BookingCard;

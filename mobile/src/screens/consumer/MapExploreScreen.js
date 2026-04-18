@@ -22,11 +22,11 @@ const MapExploreScreen = ({ navigation }) => {
         longitude: loc.coords.longitude,
       };
       setLocation(coords);
-      setMapRegion({ ...coords, latitudeDelta: 0.1, longitudeDelta: 0.1 });
+      setMapRegion({ ...coords, latitudeDelta: 0.5, longitudeDelta: 0.5 });
 
       // fetch nearby rooms
       const res = await api.get("/rooms/search", {
-        params: { lat: coords.latitude, lng: coords.longitude, radius: 10 },
+        params: { lat: coords.latitude, lng: coords.longitude, radius: 50 },
       });
       setRooms(res.data.rooms);
     };

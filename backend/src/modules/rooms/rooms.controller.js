@@ -9,13 +9,18 @@ const {
 
 const create = async (req, res) => {
   try {
-    // multer puts file info in req.file
-    // build the public URL for the uploaded image
-    const image_url = req.file
-      ? `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`
-      : null;
+    const baseUrl = `${req.protocol}://${req.get("host")}/uploads/`;
 
-    const room = await createRoom(req.user.id, { ...req.body, image_url });
+    // multer with array handles multiple files
+    const files = req.files || [];
+    const image_urls = files.map((file) => baseUrl + file.filename);
+    // console.log("payload ", req.body);
+    // console.log("image_urls ", image_urls);
+
+    const room = await createRoom(req.user.id, {
+      ...req.body,
+      image_url: image_urls,
+    });
     res.status(201).json({ success: true, room });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });

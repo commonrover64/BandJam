@@ -24,14 +24,14 @@ router.post(
   authenticate,
   requireRole("owner"),
   requireVerified,
-  upload.single("image"),
+  upload.array("images", 3),
   create,
 );
 router.patch(
   "/:id",
   authenticate,
   requireRole("owner"),
-  upload.single("image"),
+  upload.array("images", 3),
   update,
 );
 router.delete("/:id", authenticate, requireRole("owner"), remove);
