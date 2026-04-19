@@ -23,7 +23,7 @@ const RoomCard = ({ room, onPress }) => {
     >
       {/* image or gradient fallback */}
       {room.image_url ? (
-        <Image source={{ uri: room.image_url }} style={styles.image} />
+        <Image source={{ uri: room.image_url[0] }} style={styles.image} />
       ) : (
         <LinearGradient
           colors={[colors.sapphire, colors.mauve]}
