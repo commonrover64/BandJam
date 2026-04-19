@@ -5,9 +5,20 @@ import MapView, { Marker } from "react-native-maps";
 import { useNavigation } from "@react-navigation/native";
 import { colors } from "../theme/colors";
 
-const statusColor = (status) => {
-  if (status === "confirmed") return colors.green;
+const isExpired = (bookingDate) =>
+  new Date(bookingDate) < new Date(new Date().toDateString());
+
+const statusLabel = (status, bookingDate) => {
+  if (status === "cancelled") return "Cancelled";
+  if (status === "confirmed" && isExpired(bookingDate)) return "Completed";
+  if (status === "confirmed") return "Confirmed";
+  return "Pending";
+};
+
+const statusColor = (status, bookingDate) => {
   if (status === "cancelled") return colors.red;
+  if (status === "confirmed" && isExpired(bookingDate)) return colors.sapphire;
+  if (status === "confirmed") return colors.green;
   return colors.yellow;
 };
 
@@ -20,9 +31,16 @@ const BookingCard = ({ booking, onCancel, onDirections, onRebook }) => {
     <View style={styles.card}>
       {/* status pill */}
       <View
-        style={[styles.pill, { backgroundColor: statusColor(booking.status) }]}
+        style={[
+          styles.pill,
+          {
+            backgroundColor: statusColor(booking.status, booking.booking_date),
+          },
+        ]}
       >
-        <Text style={styles.pillText}>{booking.status}</Text>
+        <Text style={styles.pillText}>
+          {statusLabel(booking.status, booking.booking_date)}
+        </Text>
       </View>
 
       {/* tapping room name goes to room detail */}
@@ -97,16 +115,18 @@ const BookingCard = ({ booking, onCancel, onDirections, onRebook }) => {
       )}
 
       {/* cancel — allowed anytime except already cancelled */}
-      {booking.status !== "cancelled" && (
-        <Button
-          mode="outlined"
-          onPress={onCancel}
-          textColor={colors.red}
-          style={styles.cancelBtn}
-        >
-          Cancel Booking
-        </Button>
-      )}
+      {booking.status !== "cancelled" &&
+        new Date(booking.booking_date) >=
+          new Date(new Date().toDateString()) && (
+          <Button
+            mode="outlined"
+            onPress={onCancel}
+            textColor={colors.red}
+            style={styles.cancelBtn}
+          >
+            Cancel Booking
+          </Button>
+        )}
     </View>
   );
 };
