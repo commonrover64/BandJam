@@ -67,7 +67,6 @@ const RoomDetailScreen = ({ route, navigation }) => {
         <Text style={styles.backText}>← Back</Text>
       </TouchableOpacity>
 
-      {console.log("photos", room)}
       {/* photo carousel */}
       {photos.length > 0 ? (
         <View style={styles.carouselContainer}>
