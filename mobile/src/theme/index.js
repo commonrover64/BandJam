@@ -1,18 +1,19 @@
-import { MD3DarkTheme } from "react-native-paper";
+import { MD3DarkTheme, MD3LightTheme } from "react-native-paper";
 import { colors } from "./colors";
 
 export const theme = {
-  ...MD3DarkTheme,
+  ...MD3LightTheme,
   colors: {
-    ...MD3DarkTheme.colors,
-    primary: colors.lavender,
-    secondary: colors.mauve,
-    background: colors.base,
-    surface: colors.surface0,
-    surfaceVariant: colors.surface1,
+    ...MD3LightTheme.colors,
+    primary: colors.primary, // navy — buttons, active states
+    secondary: colors.placeholder, // muted blue-gray
+    background: colors.gradientStart, // fallback bg (gradient overrides this in screens)
+    surface: colors.inputBg, // card/input surfaces
+    surfaceVariant: colors.glass, // elevated variants
     onBackground: colors.text,
-    onSurface: colors.text,
-    outline: colors.surface2,
-    error: colors.red,
+    onSurface: colors.textDark,
+    onSurfaceVariant: colors.placeholder, // label/placeholder color inside TextInput
+    outline: colors.cardBorder,
+    error: colors.error,
   },
 };

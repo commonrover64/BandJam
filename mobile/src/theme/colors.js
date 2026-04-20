@@ -1,37 +1,37 @@
-// Catppuccin Macchiato palette
+// Glassmorphism / Soft Blue-Gray palette
 export const colors = {
-  // backgrounds
-  base: "#24273a", // main background
-  mantle: "#1e2030", // slightly darker background
-  crust: "#181926", // darkest background
+  // backgrounds & gradients
+  gradientStart: "#b8c9d9", // cool blue-gray top
+  gradientMid: "#a0b4c8", // mid blue
+  gradientEnd: "#c5bdb0", // warm beige bottom
 
-  // surfaces
-  surface0: "#363a4f", // card background
-  surface1: "#494d64", // elevated card
-  surface2: "#5b6078", // borders
+  // surfaces (frosted glass layers)
+  cardBg: "rgba(255, 255, 255, 0.30)", // main frosted card
+  cardBorder: "rgba(255, 255, 255, 0.45)", // card border
+  inputBg: "rgba(255, 255, 255, 0.72)", // input fields
+  glass: "rgba(255, 255, 255, 0.18)", // lighter glass layer
+  glassStrong: "rgba(255, 255, 255, 0.55)", // stronger glass
 
   // text
-  text: "#cad3f5", // primary text
-  subtext: "#a5adcb", // secondary text
-  overlay: "#6e738d", // muted text
+  text: "#ffffff", // primary text (on gradient)
+  textDark: "#2e3f52", // dark text (on card/light surfaces)
+  subtext: "rgba(40, 55, 70, 0.6)", // secondary text
+  label: "rgba(50, 65, 80, 0.65)", // field labels (ALL-CAPS)
+  placeholder: "#9aabb8", // input placeholder
 
   // accents
-  lavender: "#b7bdf8", // primary accent
-  blue: "#8aadf4", // links, buttons
-  sapphire: "#7dc4e4", // highlights
-  teal: "#8bd5ca", // success
-  green: "#a6da95", // confirmed/active
-  yellow: "#eed49f", // warning/pending
-  peach: "#f5a97f", // orange accent
-  red: "#ed8796", // error/cancel
-  pink: "#f5bde6", // soft accent
-  mauve: "#c6a0f6", // purple accent
+  primary: "#4a6880", // steel blue — buttons, links
+  primaryLight: "rgba(74, 104, 128, 0.15)", // light tint of primary
 
-  // glass and gradient tones
-  glass: "rgba(54, 58, 79, 0.6)",
-  glassStrong: "rgba(36, 39, 58, 0.85)",
-  gradientStart: "#363a4f",
-  gradientEnd: "#24273a",
+  // badge / icon background
+  badge: "rgba(74, 104, 128, 0.75)", // steel blue icon bg
+
+  // status
+  error: "#d9534f",
+  success: "#5a9e7c",
+  warning: "#c9933a",
+
+  // misc
   white: "#ffffff",
   black: "#000000",
 };
