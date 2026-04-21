@@ -106,15 +106,9 @@ const MyBookingsScreen = () => {
         style={StyleSheet.absoluteFillObject}
       />
 
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Title */}
+      {/* Fixed header — title, search, filters */}
+      <View style={styles.fixedHeader}>
         <Text style={styles.title}>My Bookings</Text>
-
-        {/* Search */}
         <View style={styles.searchWrapper}>
           <TextInput
             placeholder="Search by room name..."
@@ -136,8 +130,6 @@ const MyBookingsScreen = () => {
             }}
           />
         </View>
-
-        {/* Filter chips */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -155,17 +147,20 @@ const MyBookingsScreen = () => {
               activeOpacity={0.8}
             >
               <Text
-                style={[
-                  styles.chipText,
-                  filter === f && styles.chipTextActive,
-                ]}
+                style={[styles.chipText, filter === f && styles.chipTextActive]}
               >
                 {f}
               </Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
+      </View>
 
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Results */}
         {paginated.length === 0 ? (
           <View style={styles.emptyContainer}>
@@ -215,13 +210,18 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { paddingHorizontal: 24, paddingBottom: 48 },
 
+  fixedHeader: {
+    paddingHorizontal: 24,
+    paddingTop: 56,
+    paddingBottom: 4,
+  },
+
   title: {
     fontWeight: "700",
-    marginTop: 56,
     color: colors.text,
     fontSize: 26,
     letterSpacing: 0.2,
-    marginBottom: 20,
+    marginBottom: 16,
   },
 
   /* Search */

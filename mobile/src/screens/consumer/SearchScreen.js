@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   FlatList,
@@ -6,6 +6,7 @@ import {
   Alert,
   TouchableOpacity,
   ScrollView,
+  RefreshControl,
 } from "react-native";
 import { Text, Searchbar } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
@@ -28,6 +29,18 @@ const SearchScreen = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadData = useCallback(async (lat, lng) => {
+    await Promise.all([searchRooms(lat, lng), fetchRecentRooms()]);
+  }, []);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    const loc = await Location.getCurrentPositionAsync({});
+    await loadData(loc.coords.latitude, loc.coords.longitude);
+    setRefreshing(false);
+  };
 
   useEffect(() => {
     const init = async () => {
@@ -93,46 +106,52 @@ const SearchScreen = () => {
         style={StyleSheet.absoluteFillObject}
       />
 
+      {/* Fixed header */}
+      <View style={styles.headerRow}>
+        <View>
+          <Text style={styles.title}>Find a Space</Text>
+          <Text style={styles.subtitle}>{filtered.length} rooms near you</Text>
+        </View>
+        <TouchableOpacity
+          style={styles.profileBtn}
+          onPress={() => navigation.navigate("Profile")}
+        >
+          <Text style={styles.profileInitial}>P</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Fixed search bar */}
+      <View style={styles.searchWrapper}>
+        <Searchbar
+          placeholder="Search rooms by name..."
+          value={searchQuery}
+          onChangeText={(v) => {
+            setSearchQuery(v);
+            setPage(1);
+          }}
+          style={styles.searchbar}
+          inputStyle={styles.searchInput}
+          iconColor={colors.placeholder}
+          placeholderTextColor={colors.placeholder}
+          theme={{ colors: { primary: colors.primary } }}
+        />
+      </View>
+
+      {/* Scrollable content */}
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
-      >
-        {/* Header row */}
-        <View style={styles.headerRow}>
-          <View>
-            <Text style={styles.title}>Find a Space</Text>
-            <Text style={styles.subtitle}>
-              {filtered.length} rooms near you
-            </Text>
-          </View>
-          <TouchableOpacity
-            style={styles.profileBtn}
-            onPress={() => navigation.navigate("Profile")}
-          >
-            <Text style={styles.profileInitial}>P</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Search bar */}
-        <View style={styles.searchWrapper}>
-          <Searchbar
-            placeholder="Search rooms by name..."
-            value={searchQuery}
-            onChangeText={(v) => {
-              setSearchQuery(v);
-              setPage(1);
-            }}
-            style={styles.searchbar}
-            inputStyle={styles.searchInput}
-            iconColor={colors.placeholder}
-            placeholderTextColor={colors.placeholder}
-            theme={{ colors: { primary: colors.primary } }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
           />
-        </View>
-
-        {/* Recently booked carousel */}
+        }
+      >
         {recentRooms.length > 0 && (
           <View style={styles.section}>
             <SectionHeader title="Recently Booked" />
@@ -181,7 +200,7 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     paddingHorizontal: 24,
     paddingTop: 56,
-    paddingBottom: 16,
+    paddingBottom: 12,
   },
   title: {
     fontWeight: "700",

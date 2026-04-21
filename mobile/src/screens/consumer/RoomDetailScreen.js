@@ -49,7 +49,11 @@ const RoomDetailScreen = ({ route, navigation }) => {
     return (
       <View style={styles.center}>
         <LinearGradient
-          colors={[colors.gradientStart, colors.gradientMid, colors.gradientEnd]}
+          colors={[
+            colors.gradientStart,
+            colors.gradientMid,
+            colors.gradientEnd,
+          ]}
           locations={[0, 0.5, 1]}
           style={StyleSheet.absoluteFillObject}
         />
@@ -72,19 +76,16 @@ const RoomDetailScreen = ({ route, navigation }) => {
         style={StyleSheet.absoluteFillObject}
       />
 
+      {/* Fixed back button */}
+      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.back}>
+        <Text style={styles.backText}>← Back</Text>
+      </TouchableOpacity>
+
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* Back button */}
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.back}
-        >
-          <Text style={styles.backText}>← Back</Text>
-        </TouchableOpacity>
-
         {/* Photo carousel */}
         {photos.length > 0 ? (
           <View style={styles.carouselContainer}>
@@ -95,9 +96,7 @@ const RoomDetailScreen = ({ route, navigation }) => {
               showsHorizontalScrollIndicator={false}
               keyExtractor={(_, i) => i.toString()}
               onMomentumScrollEnd={(e) => {
-                const index = Math.round(
-                  e.nativeEvent.contentOffset.x / width,
-                );
+                const index = Math.round(e.nativeEvent.contentOffset.x / width);
                 setActivePhoto(index);
               }}
               renderItem={({ item }) => (
@@ -197,18 +196,19 @@ const RoomDetailScreen = ({ route, navigation }) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { paddingBottom: 48 },
+  content: { paddingBottom: 48, paddingTop: 72 },
   center: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
   },
 
-  /* Back */
+  /* Fixed back */
   back: {
-    paddingHorizontal: 24,
-    marginTop: 56,
-    marginBottom: 16,
+    position: "absolute",
+    top: 56,
+    left: 24,
+    zIndex: 10,
   },
   backText: {
     color: "rgba(255,255,255,0.75)",
