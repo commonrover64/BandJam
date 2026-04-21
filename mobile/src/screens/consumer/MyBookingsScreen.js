@@ -7,18 +7,16 @@ import {
   TouchableOpacity,
   Linking,
 } from "react-native";
-import { Text, Button, ActivityIndicator, TextInput } from "react-native-paper";
-import MapView, { Marker } from "react-native-maps";
+import { Text, ActivityIndicator, TextInput } from "react-native-paper";
+import { LinearGradient } from "expo-linear-gradient";
 import api from "../../services/api";
 import BookingCard from "../../components/BookingCard";
 import PaginationBar from "../../components/PaginationBar";
-import SectionHeader from "../../components/SectionHeader";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import { colors } from "../../theme/colors";
 import { useNavigation } from "@react-navigation/native";
 
 const PAGE_SIZE = 10;
-
 const FILTERS = ["All", "This Month", "Last Month", "Confirmed", "Cancelled"];
 
 const MyBookingsScreen = () => {
@@ -73,21 +71,16 @@ const MyBookingsScreen = () => {
     Linking.openURL(url);
   };
 
-  // apply filters
   const now = new Date();
   const filtered = bookings.filter((b) => {
     const date = new Date(b.booking_date);
-
-    // text search by room name
     if (search && !b.room_name.toLowerCase().includes(search.toLowerCase()))
       return false;
-
-    if (filter === "This Month") {
+    if (filter === "This Month")
       return (
         date.getMonth() === now.getMonth() &&
         date.getFullYear() === now.getFullYear()
       );
-    }
     if (filter === "Last Month") {
       const last = new Date(now.getFullYear(), now.getMonth() - 1, 1);
       return (
@@ -100,130 +93,191 @@ const MyBookingsScreen = () => {
     return true;
   });
 
-  // pagination
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   if (loading) return <LoadingSpinner message="Loading your bookings..." />;
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}
-    >
-      <Text variant="headlineMedium" style={styles.title}>
-        My Bookings
-      </Text>
-
-      {/* search bar */}
-      <TextInput
-        placeholder="Search by room name..."
-        value={search}
-        onChangeText={(v) => {
-          setSearch(v);
-          setPage(1);
-        }}
-        style={styles.search}
-        left={<TextInput.Icon icon="magnify" color={colors.overlay} />}
-        placeholderTextColor={colors.overlay}
-        theme={{
-          colors: {
-            primary: colors.lavender,
-            onSurfaceVariant: colors.subtext,
-          },
-        }}
+    <View style={{ flex: 1 }}>
+      <LinearGradient
+        colors={[colors.gradientStart, colors.gradientMid, colors.gradientEnd]}
+        locations={[0, 0.5, 1]}
+        style={StyleSheet.absoluteFillObject}
       />
 
-      {/* filter chips */}
       <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.filterRow}
+        style={styles.container}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
       >
-        {FILTERS.map((f) => (
-          <TouchableOpacity
-            key={f}
-            style={[styles.chip, filter === f && styles.chipActive]}
-            onPress={() => {
-              setFilter(f);
+        {/* Title */}
+        <Text style={styles.title}>My Bookings</Text>
+
+        {/* Search */}
+        <View style={styles.searchWrapper}>
+          <TextInput
+            placeholder="Search by room name..."
+            value={search}
+            onChangeText={(v) => {
+              setSearch(v);
               setPage(1);
             }}
-          >
-            <Text
-              style={[styles.chipText, filter === f && styles.chipTextActive]}
-            >
-              {f}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-
-      {/* results */}
-      {paginated.length === 0 ? (
-        <Text style={styles.empty}>No bookings found.</Text>
-      ) : (
-        paginated.map((booking) => (
-          <BookingCard
-            key={booking.id}
-            booking={booking}
-            onCancel={() => handleCancel(booking.id)}
-            onDirections={() => openDirections(booking)}
-            onRebook={() =>
-              navigation.navigate("Home", {
-                screen: "Booking",
-                params: {
-                  room: {
-                    id: booking.room_id,
-                    name: booking.room_name,
-                    address: booking.address,
-                    price_per_day: booking.total_amount,
-                    lat: booking.lat,
-                    lng: booking.lng,
-                  },
-                },
-              })
-            }
+            underlineColor="transparent"
+            activeUnderlineColor="transparent"
+            style={styles.search}
+            left={<TextInput.Icon icon="magnify" color={colors.placeholder} />}
+            placeholderTextColor={colors.placeholder}
+            theme={{
+              colors: {
+                primary: "transparent",
+                onSurfaceVariant: colors.placeholder,
+              },
+            }}
           />
-        ))
-      )}
+        </View>
 
-      <PaginationBar
-        page={page}
-        totalPages={totalPages}
-        onPrev={() => setPage((p) => p - 1)}
-        onNext={() => setPage((p) => p + 1)}
-      />
-    </ScrollView>
+        {/* Filter chips */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.filterRow}
+          contentContainerStyle={styles.filterContent}
+        >
+          {FILTERS.map((f) => (
+            <TouchableOpacity
+              key={f}
+              style={[styles.chip, filter === f && styles.chipActive]}
+              onPress={() => {
+                setFilter(f);
+                setPage(1);
+              }}
+              activeOpacity={0.8}
+            >
+              <Text
+                style={[
+                  styles.chipText,
+                  filter === f && styles.chipTextActive,
+                ]}
+              >
+                {f}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
+        {/* Results */}
+        {paginated.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyTitle}>No bookings found</Text>
+            <Text style={styles.emptySubtitle}>
+              Try adjusting your filters or search
+            </Text>
+          </View>
+        ) : (
+          paginated.map((booking) => (
+            <BookingCard
+              key={booking.id}
+              booking={booking}
+              onCancel={() => handleCancel(booking.id)}
+              onDirections={() => openDirections(booking)}
+              onRebook={() =>
+                navigation.navigate("Home", {
+                  screen: "Booking",
+                  params: {
+                    room: {
+                      id: booking.room_id,
+                      name: booking.room_name,
+                      address: booking.address,
+                      price_per_day: booking.total_amount,
+                      lat: booking.lat,
+                      lng: booking.lng,
+                    },
+                  },
+                })
+              }
+            />
+          ))
+        )}
+
+        <PaginationBar
+          page={page}
+          totalPages={totalPages}
+          onPrev={() => setPage((p) => p - 1)}
+          onNext={() => setPage((p) => p + 1)}
+        />
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.base },
-  content: { padding: 24, paddingBottom: 40 },
+  container: { flex: 1 },
+  content: { paddingHorizontal: 24, paddingBottom: 48 },
+
   title: {
-    fontWeight: "bold",
-    marginTop: 48,
+    fontWeight: "700",
+    marginTop: 56,
     color: colors.text,
-    marginBottom: 16,
+    fontSize: 26,
+    letterSpacing: 0.2,
+    marginBottom: 20,
+  },
+
+  /* Search */
+  searchWrapper: {
+    backgroundColor: "rgba(255,255,255,0.72)",
+    borderRadius: 14,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.45)",
+    marginBottom: 14,
   },
   search: {
-    backgroundColor: colors.surface0,
-    marginBottom: 12,
-    borderRadius: 12,
+    backgroundColor: "transparent",
+    fontSize: 14,
   },
-  filterRow: { marginBottom: 16 },
+
+  /* Filter chips */
+  filterRow: { marginBottom: 20 },
+  filterContent: { gap: 8, paddingRight: 8 },
   chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: colors.surface0,
-    marginRight: 8,
+    backgroundColor: "rgba(255,255,255,0.30)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.45)",
   },
-  chipActive: { backgroundColor: colors.lavender },
-  chipText: { color: colors.subtext, fontSize: 13 },
-  chipTextActive: { color: colors.base, fontWeight: "bold" },
-  empty: { color: colors.overlay, textAlign: "center", marginTop: 48 },
+  chipActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  chipText: {
+    color: "rgba(40,55,70,0.7)",
+    fontSize: 13,
+    fontWeight: "500",
+  },
+  chipTextActive: {
+    color: "#fff",
+    fontWeight: "700",
+  },
+
+  /* Empty state */
+  emptyContainer: {
+    alignItems: "center",
+    marginTop: 64,
+    gap: 8,
+  },
+  emptyTitle: {
+    color: colors.textDark,
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  emptySubtitle: {
+    color: "rgba(40,55,70,0.5)",
+    fontSize: 13,
+  },
 });
 
 export default MyBookingsScreen;
