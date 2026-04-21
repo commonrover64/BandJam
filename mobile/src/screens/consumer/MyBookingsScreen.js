@@ -6,6 +6,7 @@ import {
   Alert,
   TouchableOpacity,
   Linking,
+  RefreshControl,
 } from "react-native";
 import { Text, ActivityIndicator, TextInput } from "react-native-paper";
 import { LinearGradient } from "expo-linear-gradient";
@@ -26,20 +27,28 @@ const MyBookingsScreen = () => {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const navigation = useNavigation();
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchBookings = async () => {
+    try {
+      const res = await api.get("/bookings/consumer/me");
+      setBookings(res.data.bookings);
+    } catch {
+      Alert.alert("Error", "Could not fetch bookings");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchBookings = async () => {
-      try {
-        const res = await api.get("/bookings/consumer/me");
-        setBookings(res.data.bookings);
-      } catch {
-        Alert.alert("Error", "Could not fetch bookings");
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchBookings();
   }, []);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchBookings();
+    setRefreshing(false);
+  };
 
   const handleCancel = async (id) => {
     Alert.alert("Cancel Booking", "Are you sure?", [
@@ -160,6 +169,14 @@ const MyBookingsScreen = () => {
         style={styles.container}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
+          />
+        }
       >
         {/* Results */}
         {paginated.length === 0 ? (
