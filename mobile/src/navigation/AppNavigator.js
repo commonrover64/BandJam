@@ -8,6 +8,7 @@ import LoginScreen from "../screens/auth/LoginScreen";
 import RegisterScreen from "../screens/auth/RegisterScreen";
 import OwnerTabs from "./OwnerTabs";
 import ConsumerTabs from "./ConsumerTabs";
+import ForgotPasswordScreen from "../screens/auth/ForgotPasswordScreen";
 
 const Stack = createStackNavigator();
 
@@ -31,6 +32,7 @@ const AppNavigator = () => {
           <>
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="Register" component={RegisterScreen} />
+            <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen}/>
           </>
         ) : user.role === "owner" ? (
           // logged in as owner

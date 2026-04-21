@@ -1,6 +1,7 @@
 const pool = require("../../config/db");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const transporter = require("../../config/mailer");
 
 // register a new user (owner or consumer)
 const registerUser = async ({ name, email, password, role }) => {
@@ -90,6 +91,57 @@ const updatePhone = async (userId, phone) => {
   return rows[0];
 };
 
+const forgotPassword = async (email) => {
+  // check user exists
+  const { rows } = await pool.query("SELECT id FROM users WHERE email = $1", [
+    email,
+  ]);
+  if (!rows[0]) throw new Error("No account found with this email");
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
+
+  // reuse existing otps table
+  await pool.query("DELETE FROM otps WHERE email = $1", [email]);
+  await pool.query(
+    "INSERT INTO otps (email, otp, expires_at) VALUES ($1, $2, $3)",
+    [email, otp, expiresAt],
+  );
+
+  await transporter.sendMail({
+    from: process.env.GMAIL_USER,
+    to: email,
+    subject: "Reset your password",
+    text: `Your password reset OTP is ${otp}. It expires in 10 minutes.`,
+  });
+
+  return { message: "OTP sent to your email" };
+};
+
+const resetPassword = async (email, otp, newPassword) => {
+  // verify OTP
+  const { rows } = await pool.query(
+    "SELECT * FROM otps WHERE email = $1 AND otp = $2",
+    [email, otp],
+  );
+  const record = rows[0];
+  if (!record) throw new Error("Invalid OTP");
+  if (new Date() > new Date(record.expires_at))
+    throw new Error("OTP has expired");
+
+  // hash new password and update
+  const hashed = await bcrypt.hash(newPassword, 10);
+  await pool.query("UPDATE users SET password = $1 WHERE email = $2", [
+    hashed,
+    email,
+  ]);
+
+  // cleanup OTP
+  await pool.query("DELETE FROM otps WHERE email = $1", [email]);
+
+  return { message: "Password reset successfully" };
+};
+
 module.exports = {
   registerUser,
   loginUser,
@@ -97,4 +149,6 @@ module.exports = {
   updateProfile,
   updateInstruments,
   updatePhone,
+  forgotPassword,
+  resetPassword,
 };

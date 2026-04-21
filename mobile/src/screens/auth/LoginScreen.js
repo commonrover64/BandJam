@@ -117,7 +117,9 @@ const LoginScreen = ({ navigation }) => {
           {/* Password */}
           <View style={styles.passwordLabelRow}>
             <Text style={styles.fieldLabel}>PASSWORD</Text>
-            <TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => navigation.navigate("ForgotPassword")}
+            >
               <Text style={styles.forgotText}>Forgot?</Text>
             </TouchableOpacity>
           </View>

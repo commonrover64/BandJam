@@ -5,6 +5,8 @@ const {
   updateProfile,
   updateInstruments,
   updatePhone,
+  forgotPassword,
+  resetPassword,
 } = require("./auth.service");
 
 const register = async (req, res) => {
@@ -63,6 +65,25 @@ const editPhone = async (req, res) => {
   }
 };
 
+const forgotPasswordHandler = async (req, res) => {
+  try {
+    const result = await forgotPassword(req.body.email);
+    res.status(200).json({ success: true, ...result });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+const resetPasswordHandler = async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+    const result = await resetPassword(email, otp, newPassword);
+    res.status(200).json({ success: true, ...result });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -70,4 +91,6 @@ module.exports = {
   editProfile,
   editInstruments,
   editPhone,
+  forgotPasswordHandler,
+  resetPasswordHandler
 };
