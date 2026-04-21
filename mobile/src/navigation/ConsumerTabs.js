@@ -27,11 +27,14 @@ const ConsumerTabs = () => (
     screenOptions={{
       headerShown: false,
       tabBarStyle: {
-        backgroundColor: colors.mantle,
-        borderTopColor: colors.surface0,
+        backgroundColor: "rgba(184, 201, 217, 0.97)", // gradientStart, near-opaque
+        borderTopWidth: 1,
+        borderTopColor: "rgba(255,255,255,0.5)",
+        elevation: 0,
+        shadowOpacity: 0,
       },
-      tabBarActiveTintColor: colors.lavender,
-      tabBarInactiveTintColor: colors.overlay,
+      tabBarActiveTintColor: colors.primary, // steel blue
+      tabBarInactiveTintColor: "rgba(46,63,82,0.4)",
     }}
   >
     <Tab.Screen

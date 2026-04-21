@@ -11,7 +11,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import { colors } from "../theme/colors";
 
 const { width } = Dimensions.get("window");
-// 2 column grid with padding and gap
 const CARD_WIDTH = (width - 48 - 12) / 2;
 
 const RoomCard = ({ room, onPress }) => {
@@ -21,34 +20,34 @@ const RoomCard = ({ room, onPress }) => {
       onPress={onPress}
       activeOpacity={0.88}
     >
-      {/* image or gradient fallback */}
+      {/* Image or gradient fallback */}
       {room.image_url ? (
         <Image source={{ uri: room.image_url[0] }} style={styles.image} />
       ) : (
         <LinearGradient
-          colors={[colors.sapphire, colors.mauve]}
+          colors={[colors.gradientStart, colors.gradientMid]}
           style={styles.image}
         />
       )}
 
-      {/* subtle gradient over bottom of image */}
+      {/* Gradient overlay over bottom of image */}
       <LinearGradient
-        colors={["transparent", "rgba(0,0,0,0.6)"]}
+        colors={["transparent", "rgba(0,0,0,0.55)"]}
         style={styles.imageOverlay}
       />
 
-      {/* price badge top right */}
+      {/* Price badge */}
       <View style={styles.priceBadge}>
         <Text style={styles.priceText}>₹{room.price_per_day}</Text>
       </View>
 
-      {/* info below image */}
+      {/* Info */}
       <View style={styles.info}>
         <Text style={styles.name} numberOfLines={1}>
           {room.name}
         </Text>
         <Text style={styles.address} numberOfLines={1}>
-          📍 {room.address}
+          {room.address}
         </Text>
         {room.distance_km && (
           <Text style={styles.distance}>{room.distance_km} km away</Text>
@@ -61,12 +60,22 @@ const RoomCard = ({ room, onPress }) => {
 const styles = StyleSheet.create({
   card: {
     width: CARD_WIDTH,
-    backgroundColor: colors.surface0,
-    borderRadius: 14,
+    backgroundColor: "rgba(255, 255, 255, 0.30)",
+    borderRadius: 16,
     overflow: "hidden",
     marginBottom: 14,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.45)",
+    shadowColor: "#6a8099",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 4,
   },
-  image: { width: "100%", height: 100 },
+  image: {
+    width: "100%",
+    height: 100,
+  },
   imageOverlay: {
     position: "absolute",
     top: 50,
@@ -76,23 +85,40 @@ const styles = StyleSheet.create({
   },
   priceBadge: {
     position: "absolute",
-    top: 6,
-    right: 6,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    paddingHorizontal: 7,
+    top: 8,
+    right: 8,
+    backgroundColor: "rgba(46, 64, 88, 0.72)",
+    paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.2)",
   },
-  priceText: { color: colors.green, fontSize: 10, fontWeight: "bold" },
-  info: { padding: 10 },
+  priceText: {
+    color: "#fff",
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 0.3,
+  },
+  info: {
+    padding: 10,
+  },
   name: {
-    color: colors.text,
-    fontWeight: "bold",
+    color: colors.textDark,
+    fontWeight: "700",
     fontSize: 12,
+    marginBottom: 3,
+  },
+  address: {
+    color: colors.subtext,
+    fontSize: 10,
     marginBottom: 2,
   },
-  address: { color: colors.subtext, fontSize: 10, marginBottom: 2 },
-  distance: { color: colors.sapphire, fontSize: 10 },
+  distance: {
+    color: colors.primary,
+    fontSize: 10,
+    fontWeight: "600",
+  },
 });
 
 export default RoomCard;

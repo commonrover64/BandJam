@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   FlatList,
@@ -16,6 +16,7 @@ import RoomCarousel from "../../components/RoomCarousel";
 import SectionHeader from "../../components/SectionHeader";
 import PaginationBar from "../../components/PaginationBar";
 import LoadingSpinner from "../../components/LoadingSpinner";
+import { LinearGradient } from "expo-linear-gradient";
 import { colors } from "../../theme/colors";
 
 const PAGE_SIZE = 10;
@@ -74,7 +75,6 @@ const SearchScreen = () => {
   const goToRoom = (room) =>
     navigation.navigate("RoomDetail", { roomId: room.id });
 
-  // filter rooms by search query
   const filtered = rooms.filter((r) =>
     r.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
@@ -85,108 +85,164 @@ const SearchScreen = () => {
   if (loading) return <LoadingSpinner message="Finding rooms near you..." />;
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}
-      keyboardShouldPersistTaps="handled"
-    >
-      {/* header row — title + profile icon */}
-      <View style={styles.headerRow}>
-        <View>
-          <Text variant="headlineMedium" style={styles.title}>
-            Find a Space 🎸
-          </Text>
-          <Text style={styles.subtitle}>{filtered.length} rooms near you</Text>
-        </View>
-        <TouchableOpacity
-          style={styles.profileBtn}
-          onPress={() => navigation.navigate("Profile")}
-        >
-          <Text style={styles.profileEmoji}>👤</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* search bar */}
-      <Searchbar
-        placeholder="Search rooms by name..."
-        value={searchQuery}
-        onChangeText={(v) => {
-          setSearchQuery(v);
-          setPage(1);
-        }}
-        style={styles.searchbar}
-        inputStyle={{ color: colors.text }}
-        iconColor={colors.overlay}
-        placeholderTextColor={colors.overlay}
-        theme={{ colors: { primary: colors.lavender } }}
+    <View style={{ flex: 1 }}>
+      {/* Gradient background */}
+      <LinearGradient
+        colors={[colors.gradientStart, colors.gradientMid, colors.gradientEnd]}
+        locations={[0, 0.5, 1]}
+        style={StyleSheet.absoluteFillObject}
       />
 
-      {/* recently booked carousel */}
-      {recentRooms.length > 0 && (
-        <View style={{ paddingHorizontal: 24 }}>
-          <SectionHeader title="Recently Booked" />
-          <RoomCarousel rooms={recentRooms} onPress={goToRoom} />
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* Header row */}
+        <View style={styles.headerRow}>
+          <View>
+            <Text style={styles.title}>Find a Space</Text>
+            <Text style={styles.subtitle}>
+              {filtered.length} rooms near you
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={styles.profileBtn}
+            onPress={() => navigation.navigate("Profile")}
+          >
+            <Text style={styles.profileInitial}>P</Text>
+          </TouchableOpacity>
         </View>
-      )}
 
-      {/* all rooms grid */}
-      <RoomCarousel rooms={recentRooms} onPress={goToRoom} />
-      <View style={{ paddingHorizontal: 24 }}>
-        <SectionHeader title="Nearby Rooms" />
-      </View>
-      <View style={styles.grid}>
-        {paginated.map((room) => (
-          <RoomCard key={room.id} room={room} onPress={() => goToRoom(room)} />
-        ))}
-      </View>
+        {/* Search bar */}
+        <View style={styles.searchWrapper}>
+          <Searchbar
+            placeholder="Search rooms by name..."
+            value={searchQuery}
+            onChangeText={(v) => {
+              setSearchQuery(v);
+              setPage(1);
+            }}
+            style={styles.searchbar}
+            inputStyle={styles.searchInput}
+            iconColor={colors.placeholder}
+            placeholderTextColor={colors.placeholder}
+            theme={{ colors: { primary: colors.primary } }}
+          />
+        </View>
 
-      {/* pagination */}
-      <PaginationBar
-        page={page}
-        totalPages={totalPages}
-        onPrev={() => setPage((p) => p - 1)}
-        onNext={() => setPage((p) => p + 1)}
-      />
-    </ScrollView>
+        {/* Recently booked carousel */}
+        {recentRooms.length > 0 && (
+          <View style={styles.section}>
+            <SectionHeader title="Recently Booked" />
+            <RoomCarousel rooms={recentRooms} onPress={goToRoom} />
+          </View>
+        )}
+
+        {/* Nearby rooms */}
+        <View style={styles.section}>
+          <SectionHeader title="Nearby Rooms" />
+          <View style={styles.grid}>
+            {paginated.map((room) => (
+              <RoomCard
+                key={room.id}
+                room={room}
+                onPress={() => goToRoom(room)}
+              />
+            ))}
+          </View>
+        </View>
+
+        {/* Pagination */}
+        <PaginationBar
+          page={page}
+          totalPages={totalPages}
+          onPrev={() => setPage((p) => p - 1)}
+          onNext={() => setPage((p) => p + 1)}
+        />
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.base },
-  content: { paddingBottom: 40 },
+  container: {
+    flex: 1,
+  },
+  content: {
+    paddingBottom: 48,
+  },
+
+  /* Header */
   headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
     paddingHorizontal: 24,
     paddingTop: 56,
-    paddingBottom: 8,
+    paddingBottom: 16,
   },
-  title: { fontWeight: "bold", color: colors.text, fontSize: 28 },
-  subtitle: { color: colors.subtext, marginTop: 2, fontSize: 13 },
+  title: {
+    fontWeight: "700",
+    color: colors.text,
+    fontSize: 28,
+    letterSpacing: 0.2,
+  },
+  subtitle: {
+    color: "rgba(255,255,255,0.65)",
+    marginTop: 4,
+    fontSize: 13,
+    letterSpacing: 0.2,
+  },
+
+  /* Profile button */
   profileBtn: {
-    backgroundColor: colors.surface0,
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    backgroundColor: "rgba(74, 104, 128, 0.75)",
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.3)",
   },
-  profileEmoji: { fontSize: 16 },
-  searchbar: {
-    backgroundColor: colors.surface0,
-    marginHorizontal: 24,
+  profileInitial: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 15,
+  },
+
+  /* Search bar */
+  searchWrapper: {
+    paddingHorizontal: 24,
     marginBottom: 24,
+  },
+  searchbar: {
+    backgroundColor: "rgba(255,255,255,0.72)",
     borderRadius: 14,
     elevation: 0,
-    height: 46,
+    height: 48,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.45)",
   },
+  searchInput: {
+    color: colors.textDark,
+    fontSize: 14,
+  },
+
+  /* Sections */
+  section: {
+    paddingHorizontal: 24,
+    marginBottom: 8,
+  },
+
+  /* Grid */
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
-    paddingHorizontal: 24,
+    marginTop: 4,
   },
 });
 
