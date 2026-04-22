@@ -7,10 +7,11 @@ import {
   TouchableOpacity,
   Image,
 } from "react-native";
-import { Text, TextInput, Button } from "react-native-paper";
+import { Text, TextInput } from "react-native-paper";
 import MapView, { Marker } from "react-native-maps";
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
+import { LinearGradient } from "expo-linear-gradient";
 import api from "../../services/api";
 import { colors } from "../../theme/colors";
 
@@ -22,10 +23,10 @@ const CreateRoomScreen = () => {
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
   const [price, setPrice] = useState("");
-  const [images, setImages] = useState([]); // array of up to 3 image assets
+  const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
-  const [addressMode, setAddressMode] = useState("text"); // 'text' | 'map'
+  const [addressMode, setAddressMode] = useState("text");
   const [location, setLocation] = useState({
     latitude: 20.5937,
     longitude: 78.9629,
@@ -60,9 +61,7 @@ const CreateRoomScreen = () => {
       aspect: [16, 9],
       quality: 0.8,
     });
-    if (!result.canceled) {
-      setImages((prev) => [...prev, result.assets[0]]);
-    }
+    if (!result.canceled) setImages((prev) => [...prev, result.assets[0]]);
   };
 
   const takePhoto = async () => {
@@ -80,9 +79,7 @@ const CreateRoomScreen = () => {
       aspect: [16, 9],
       quality: 0.8,
     });
-    if (!result.canceled) {
-      setImages((prev) => [...prev, result.assets[0]]);
-    }
+    if (!result.canceled) setImages((prev) => [...prev, result.assets[0]]);
   };
 
   const removeImage = (index) => {
@@ -103,7 +100,7 @@ const CreateRoomScreen = () => {
         setErrors((prev) => ({ ...prev, address: null }));
       }
     } catch {
-      // silently fail — user can type address manually
+      // silently fail
     }
   };
 
@@ -111,7 +108,6 @@ const CreateRoomScreen = () => {
     if (!validate()) return;
     try {
       setLoading(true);
-
       const formData = new FormData();
       formData.append("name", name);
       formData.append("description", description);
@@ -120,7 +116,6 @@ const CreateRoomScreen = () => {
       formData.append("price_per_day", price);
       formData.append("lat", location.latitude.toString());
       formData.append("lng", location.longitude.toString());
-      // append all selected images
       images.forEach((img, index) => {
         formData.append("images", {
           uri: img.uri,
@@ -128,14 +123,10 @@ const CreateRoomScreen = () => {
           type: "image/jpeg",
         });
       });
-
       await api.post("/rooms", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-
-      Alert.alert("Success 🎉", "Room listed successfully!");
-
-      // reset form
+      Alert.alert("Success", "Room listed successfully!");
       setName("");
       setDescription("");
       setAddress("");
@@ -153,350 +144,446 @@ const CreateRoomScreen = () => {
     }
   };
 
+  const inputTheme = {
+    colors: {
+      primary: "transparent",
+      onSurfaceVariant: colors.placeholder,
+      error: colors.error,
+    },
+  };
+
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}
-      keyboardShouldPersistTaps="handled"
-    >
-      <Text variant="headlineMedium" style={styles.title}>
-        List a Room
-      </Text>
-      <Text style={styles.subtitle}>Fill in your practice space details</Text>
+    <View style={{ flex: 1 }}>
+      <LinearGradient
+        colors={[colors.gradientStart, colors.gradientMid, colors.gradientEnd]}
+        locations={[0, 0.5, 1]}
+        style={StyleSheet.absoluteFillObject}
+      />
 
-      {/* photo section */}
-      <Text style={styles.label}>
-        Room Photos ({images.length}/{MAX_PHOTOS})
-      </Text>
+      {/* Fixed title */}
+      <Text style={styles.title}>List a Room</Text>
 
-      {/* photo previews */}
-      {images.length > 0 && (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.previewRow}
-        >
-          {images.map((img, index) => (
-            <View key={index} style={styles.previewWrapper}>
-              <Image source={{ uri: img.uri }} style={styles.previewImage} />
-              {/* remove button */}
-              <TouchableOpacity
-                style={styles.removeBtn}
-                onPress={() => removeImage(index)}
-              >
-                <Text style={styles.removeBtnText}>✕</Text>
-              </TouchableOpacity>
-              {/* first photo badge */}
-              {index === 0 && (
-                <View style={styles.mainBadge}>
-                  <Text style={styles.mainBadgeText}>Main</Text>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* Photo section */}
+        <View style={styles.card}>
+          <Text style={styles.sectionLabel}>
+            ROOM PHOTOS ({images.length}/{MAX_PHOTOS})
+          </Text>
+
+          <View style={styles.photoGrid}>
+            {Array.from({ length: MAX_PHOTOS }).map((_, index) => {
+              const img = images[index];
+              return img ? (
+                // Filled slot
+                <View key={index} style={styles.photoSlot}>
+                  <Image source={{ uri: img.uri }} style={styles.slotImage} />
+                  {index === 0 && (
+                    <View style={styles.mainBadge}>
+                      <Text style={styles.mainBadgeText}>MAIN</Text>
+                    </View>
+                  )}
+                  <TouchableOpacity
+                    style={styles.removeBtn}
+                    onPress={() => removeImage(index)}
+                  >
+                    <Text style={styles.removeBtnText}>✕</Text>
+                  </TouchableOpacity>
                 </View>
-              )}
-            </View>
-          ))}
-        </ScrollView>
-      )}
+              ) : (
+                // Empty slot
+                <TouchableOpacity
+                  key={index}
+                  style={styles.photoSlot}
+                  onPress={pickFromGallery}
+                  activeOpacity={0.75}
+                >
+                  <View style={styles.emptySlotInner}>
+                    <Text style={styles.emptyPlus}>+</Text>
+                    <Text style={styles.emptySlotText}>
+                      {index === 0 ? "Add Main Photo" : "Add Photo"}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
 
-      {/* add photo buttons — hide when max reached */}
-      {images.length < MAX_PHOTOS && (
-        <View style={styles.photoActions}>
-          <TouchableOpacity style={styles.photoBtn} onPress={pickFromGallery}>
-            <Text style={styles.photoBtnIcon}>🖼</Text>
-            <Text style={styles.photoBtnText}>Gallery</Text>
+          {/* Camera option */}
+          <TouchableOpacity
+            style={styles.cameraRow}
+            onPress={takePhoto}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.cameraText}>Take a photo instead</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.photoBtn} onPress={takePhoto}>
-            <Text style={styles.photoBtnIcon}>📸</Text>
-            <Text style={styles.photoBtnText}>Camera</Text>
-          </TouchableOpacity>
-          {/* empty slot indicators */}
-          {Array.from({ length: MAX_PHOTOS - images.length - 1 }).map(
-            (_, i) => (
-              <View key={i} style={styles.emptySlot}>
-                <Text style={styles.emptySlotText}>+</Text>
+        </View>
+
+        {/* Room details card */}
+        <View style={styles.card}>
+          <Text style={styles.sectionLabel}>ROOM DETAILS</Text>
+
+          <Text style={styles.fieldLabel}>ROOM NAME</Text>
+          <View style={styles.inputWrapper}>
+            <TextInput
+              placeholder="e.g. Studio A, Jam Room..."
+              placeholderTextColor={colors.placeholder}
+              value={name}
+              onChangeText={(v) => {
+                setName(v);
+                setErrors((e) => ({ ...e, name: null }));
+              }}
+              underlineColor="transparent"
+              activeUnderlineColor="transparent"
+              style={styles.input}
+              theme={inputTheme}
+              error={!!errors.name}
+            />
+          </View>
+          {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
+
+          <Text style={styles.fieldLabel}>DESCRIPTION</Text>
+          <View style={styles.inputWrapper}>
+            <TextInput
+              placeholder="Optional — what makes this space special?"
+              placeholderTextColor={colors.placeholder}
+              value={description}
+              onChangeText={setDescription}
+              multiline
+              numberOfLines={3}
+              underlineColor="transparent"
+              activeUnderlineColor="transparent"
+              style={[
+                styles.input,
+                { minHeight: 80, textAlignVertical: "top" },
+              ]}
+              theme={inputTheme}
+            />
+          </View>
+
+          <Text style={styles.fieldLabel}>PHONE</Text>
+          <View style={styles.inputWrapper}>
+            <TextInput
+              placeholder="Contact number"
+              placeholderTextColor={colors.placeholder}
+              value={phone}
+              onChangeText={(v) => {
+                setPhone(v);
+                setErrors((e) => ({ ...e, phone: null }));
+              }}
+              keyboardType="phone-pad"
+              underlineColor="transparent"
+              activeUnderlineColor="transparent"
+              style={styles.input}
+              theme={inputTheme}
+              error={!!errors.phone}
+            />
+          </View>
+          {errors.phone && <Text style={styles.errorText}>{errors.phone}</Text>}
+
+          <Text style={styles.fieldLabel}>PRICE PER DAY (₹)</Text>
+          <View style={styles.inputWrapper}>
+            <TextInput
+              placeholder="e.g. 500"
+              placeholderTextColor={colors.placeholder}
+              value={price}
+              onChangeText={(v) => {
+                setPrice(v);
+                setErrors((e) => ({ ...e, price: null }));
+              }}
+              keyboardType="numeric"
+              underlineColor="transparent"
+              activeUnderlineColor="transparent"
+              style={styles.input}
+              theme={inputTheme}
+              error={!!errors.price}
+            />
+          </View>
+          {errors.price && <Text style={styles.errorText}>{errors.price}</Text>}
+        </View>
+
+        {/* Location card */}
+        <View style={styles.card}>
+          <Text style={styles.sectionLabel}>LOCATION</Text>
+
+          {/* Address mode toggle */}
+          <View style={styles.addressToggle}>
+            <TouchableOpacity
+              style={[
+                styles.toggleBtn,
+                addressMode === "text" && styles.toggleActive,
+              ]}
+              onPress={() => setAddressMode("text")}
+              activeOpacity={0.8}
+            >
+              <Text
+                style={[
+                  styles.toggleText,
+                  addressMode === "text" && styles.toggleTextActive,
+                ]}
+              >
+                Type Address
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.toggleBtn,
+                addressMode === "map" && styles.toggleActive,
+              ]}
+              onPress={() => setAddressMode("map")}
+              activeOpacity={0.8}
+            >
+              <Text
+                style={[
+                  styles.toggleText,
+                  addressMode === "map" && styles.toggleTextActive,
+                ]}
+              >
+                Pin on Map
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {addressMode === "text" ? (
+            <>
+              <View style={styles.inputWrapper}>
+                <TextInput
+                  placeholder="Full address"
+                  placeholderTextColor={colors.placeholder}
+                  value={address}
+                  onChangeText={(v) => {
+                    setAddress(v);
+                    setErrors((e) => ({ ...e, address: null }));
+                  }}
+                  underlineColor="transparent"
+                  activeUnderlineColor="transparent"
+                  style={styles.input}
+                  theme={inputTheme}
+                  error={!!errors.address}
+                />
               </View>
-            ),
+              {errors.address && (
+                <Text style={styles.errorText}>{errors.address}</Text>
+              )}
+              <Text style={styles.hint}>
+                Switch to map mode to pin exact coordinates
+              </Text>
+            </>
+          ) : (
+            <>
+              <Text style={styles.hint}>Tap on the map to drop a pin</Text>
+              <MapView
+                style={styles.map}
+                initialRegion={{
+                  latitude: location.latitude,
+                  longitude: location.longitude,
+                  latitudeDelta: 5,
+                  longitudeDelta: 5,
+                }}
+                onPress={handleMapPress}
+              >
+                <Marker coordinate={location} />
+              </MapView>
+              <Text style={styles.coordText}>
+                {location.latitude.toFixed(4)}, {location.longitude.toFixed(4)}
+              </Text>
+              {address ? (
+                <Text style={styles.autoAddress}>{address}</Text>
+              ) : (
+                <Text style={styles.hint}>Tap map to auto-fill address</Text>
+              )}
+              {errors.address && (
+                <Text style={styles.errorText}>{errors.address}</Text>
+              )}
+            </>
           )}
         </View>
-      )}
 
-      {/* room details */}
-      <Text style={styles.label}>Room Details</Text>
-
-      <TextInput
-        label="Room Name"
-        value={name}
-        onChangeText={(v) => {
-          setName(v);
-          setErrors((e) => ({ ...e, name: null }));
-        }}
-        style={styles.input}
-        error={!!errors.name}
-        theme={{
-          colors: {
-            primary: colors.lavender,
-            onSurfaceVariant: colors.subtext,
-          },
-        }}
-      />
-      {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
-
-      <TextInput
-        label="Description (optional)"
-        value={description}
-        onChangeText={setDescription}
-        multiline
-        numberOfLines={3}
-        style={styles.input}
-        theme={{
-          colors: {
-            primary: colors.lavender,
-            onSurfaceVariant: colors.subtext,
-          },
-        }}
-      />
-
-      <TextInput
-        label="Phone"
-        value={phone}
-        onChangeText={(v) => {
-          setPhone(v);
-          setErrors((e) => ({ ...e, phone: null }));
-        }}
-        keyboardType="phone-pad"
-        style={styles.input}
-        error={!!errors.phone}
-        theme={{
-          colors: {
-            primary: colors.lavender,
-            onSurfaceVariant: colors.subtext,
-          },
-        }}
-      />
-      {errors.phone && <Text style={styles.errorText}>{errors.phone}</Text>}
-
-      <TextInput
-        label="Price per Day (₹)"
-        value={price}
-        onChangeText={(v) => {
-          setPrice(v);
-          setErrors((e) => ({ ...e, price: null }));
-        }}
-        keyboardType="numeric"
-        style={styles.input}
-        error={!!errors.price}
-        theme={{
-          colors: {
-            primary: colors.lavender,
-            onSurfaceVariant: colors.subtext,
-          },
-        }}
-      />
-      {errors.price && <Text style={styles.errorText}>{errors.price}</Text>}
-
-      {/* location section */}
-      <Text style={styles.label}>Location</Text>
-
-      {/* toggle — text or map */}
-      <View style={styles.addressToggle}>
+        {/* Submit */}
         <TouchableOpacity
-          style={[
-            styles.toggleBtn,
-            addressMode === "text" && styles.toggleActive,
-          ]}
-          onPress={() => setAddressMode("text")}
+          style={[styles.submitBtn, loading && { opacity: 0.7 }]}
+          onPress={handleCreate}
+          disabled={loading}
+          activeOpacity={0.85}
         >
-          <Text
-            style={[
-              styles.toggleText,
-              addressMode === "text" && styles.toggleTextActive,
-            ]}
-          >
-            ✍️ Type Address
+          <Text style={styles.submitText}>
+            {loading ? "LISTING…" : "LIST ROOM"}
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.toggleBtn,
-            addressMode === "map" && styles.toggleActive,
-          ]}
-          onPress={() => setAddressMode("map")}
-        >
-          <Text
-            style={[
-              styles.toggleText,
-              addressMode === "map" && styles.toggleTextActive,
-            ]}
-          >
-            📍 Pin on Map
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {addressMode === "text" ? (
-        <>
-          <TextInput
-            label="Full Address"
-            value={address}
-            onChangeText={(v) => {
-              setAddress(v);
-              setErrors((e) => ({ ...e, address: null }));
-            }}
-            style={styles.input}
-            error={!!errors.address}
-            theme={{
-              colors: {
-                primary: colors.lavender,
-                onSurfaceVariant: colors.subtext,
-              },
-            }}
-          />
-          {errors.address && (
-            <Text style={styles.errorText}>{errors.address}</Text>
-          )}
-          <Text style={styles.hint}>
-            💡 Switch to map mode to pin exact coordinates
-          </Text>
-        </>
-      ) : (
-        <>
-          <Text style={styles.hint}>Tap on the map to drop a pin</Text>
-          <MapView
-            style={styles.map}
-            initialRegion={{
-              latitude: location.latitude,
-              longitude: location.longitude,
-              latitudeDelta: 5,
-              longitudeDelta: 5,
-            }}
-            onPress={handleMapPress}
-          >
-            <Marker coordinate={location} />
-          </MapView>
-          <Text style={styles.coordText}>
-            📍 {location.latitude.toFixed(4)}, {location.longitude.toFixed(4)}
-          </Text>
-          {address ? (
-            <Text style={styles.autoAddress}>✅ {address}</Text>
-          ) : (
-            <Text style={styles.hint}>Tap map to auto fill address</Text>
-          )}
-          {errors.address && (
-            <Text style={styles.errorText}>{errors.address}</Text>
-          )}
-        </>
-      )}
-
-      <Button
-        mode="contained"
-        onPress={handleCreate}
-        loading={loading}
-        disabled={loading}
-        style={styles.button}
-        contentStyle={styles.buttonContent}
-      >
-        List Room
-      </Button>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.base },
+  container: { flex: 1 },
   content: { padding: 24, paddingBottom: 48 },
+
   title: {
-    fontWeight: "bold",
+    fontWeight: "700",
     color: colors.text,
-    marginTop: 48,
-    marginBottom: 4,
-  },
-  subtitle: { color: colors.subtext, marginBottom: 24 },
-  label: {
-    color: colors.subtext,
-    fontSize: 12,
-    marginBottom: 8,
-    marginTop: 16,
+    fontSize: 26,
+    letterSpacing: 0.2,
+    paddingTop: 56,
+    paddingHorizontal: 24,
+    paddingBottom: 16,
   },
 
-  // photo section
-  previewRow: { marginBottom: 12 },
-  previewWrapper: {
-    width: 110,
-    height: 80,
+  /* Cards */
+  card: {
+    backgroundColor: "rgba(255,255,255,0.30)",
+    borderRadius: 20,
+    padding: 18,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.45)",
+    shadowColor: "#6a8099",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 3,
+  },
+  sectionLabel: {
+    fontSize: 10,
+    letterSpacing: 2,
+    color: "rgba(50,65,80,0.55)",
+    fontWeight: "700",
+    marginBottom: 14,
+  },
+  fieldLabel: {
+    fontSize: 10,
+    letterSpacing: 2,
+    color: "rgba(50,65,80,0.55)",
+    fontWeight: "700",
+    marginBottom: 6,
+    marginTop: 12,
+  },
+
+  /* Input */
+  inputWrapper: {
+    backgroundColor: "rgba(255,255,255,0.72)",
     borderRadius: 12,
     overflow: "hidden",
-    marginRight: 10,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.45)",
+    marginBottom: 2,
+  },
+  input: {
+    backgroundColor: "transparent",
+    fontSize: 14,
+  },
+  errorText: {
+    color: colors.error,
+    fontSize: 11,
+    marginBottom: 4,
+    marginLeft: 2,
+  },
+  hint: {
+    color: "rgba(40,55,70,0.45)",
+    fontSize: 12,
+    marginTop: 6,
+    marginBottom: 4,
+  },
+
+  /* Photo section */
+  photoGrid: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 10,
+  },
+  photoSlot: {
+    flex: 1,
+    height: 100,
+    borderRadius: 14,
+    overflow: "hidden",
     position: "relative",
   },
-  previewImage: { width: "100%", height: "100%" },
+  slotImage: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
+  },
+  emptySlotInner: {
+    flex: 1,
+    height: 100,
+    backgroundColor: "rgba(255,255,255,0.35)",
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: "rgba(255,255,255,0.5)",
+    borderStyle: "dashed",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+  },
+  emptyPlus: {
+    fontSize: 22,
+    color: colors.primary,
+    fontWeight: "300",
+    lineHeight: 26,
+  },
+  emptySlotText: {
+    fontSize: 10,
+    color: "rgba(40,55,70,0.5)",
+    fontWeight: "600",
+    letterSpacing: 0.3,
+    textAlign: "center",
+  },
+  mainBadge: {
+    position: "absolute",
+    bottom: 6,
+    left: 6,
+    backgroundColor: colors.primary,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  mainBadgeText: {
+    color: "#fff",
+    fontSize: 8,
+    fontWeight: "700",
+    letterSpacing: 1,
+  },
   removeBtn: {
     position: "absolute",
-    top: 4,
-    right: 4,
-    backgroundColor: "rgba(0,0,0,0.6)",
+    top: 5,
+    right: 5,
+    backgroundColor: "rgba(0,0,0,0.5)",
     width: 20,
     height: 20,
     borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
   },
-  removeBtnText: { color: colors.white, fontSize: 10, fontWeight: "bold" },
-  mainBadge: {
-    position: "absolute",
-    bottom: 4,
-    left: 4,
-    backgroundColor: colors.lavender,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
+  removeBtnText: {
+    color: "#fff",
+    fontSize: 10,
+    fontWeight: "700",
   },
-  mainBadgeText: { color: colors.base, fontSize: 9, fontWeight: "bold" },
-
-  photoActions: {
-    flexDirection: "row",
-    gap: 10,
-    marginBottom: 20,
-  },
-  photoBtn: {
-    flex: 1,
-    backgroundColor: colors.surface0,
-    borderRadius: 12,
-    padding: 14,
+  cameraRow: {
     alignItems: "center",
-    gap: 4,
-    borderWidth: 1,
-    borderColor: colors.surface2,
-    borderStyle: "dashed",
+    paddingVertical: 6,
   },
-  photoBtnIcon: { fontSize: 22 },
-  photoBtnText: { color: colors.subtext, fontSize: 12 },
-  emptySlot: {
-    flex: 1,
-    backgroundColor: colors.surface0,
-    borderRadius: 12,
-    padding: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: colors.surface2,
-    borderStyle: "dashed",
-    opacity: 0.4,
+  cameraText: {
+    color: colors.primary,
+    fontSize: 12,
+    fontWeight: "600",
+    textDecorationLine: "underline",
   },
-  emptySlotText: { color: colors.overlay, fontSize: 22 },
 
-  // form
-  input: { marginBottom: 4, backgroundColor: colors.surface0 },
-  errorText: { color: colors.red, fontSize: 12, marginBottom: 8 },
-  hint: { color: colors.overlay, fontSize: 12, marginBottom: 12 },
-
-  // address toggle
+  /* Address toggle */
   addressToggle: {
     flexDirection: "row",
-    backgroundColor: colors.surface0,
+    backgroundColor: "rgba(255,255,255,0.35)",
     borderRadius: 12,
     padding: 4,
-    marginBottom: 16,
+    marginBottom: 14,
     gap: 4,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.4)",
   },
   toggleBtn: {
     flex: 1,
@@ -504,17 +591,51 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: "center",
   },
-  toggleActive: { backgroundColor: colors.lavender },
-  toggleText: { color: colors.subtext, fontSize: 13, fontWeight: "bold" },
-  toggleTextActive: { color: colors.base },
+  toggleActive: { backgroundColor: colors.primary },
+  toggleText: { color: "rgba(40,55,70,0.65)", fontSize: 13, fontWeight: "600" },
+  toggleTextActive: { color: "#fff", fontWeight: "700" },
 
-  // map
-  map: { height: 220, borderRadius: 14, marginBottom: 8 },
-  coordText: { color: colors.overlay, fontSize: 12, marginBottom: 4 },
-  autoAddress: { color: colors.green, fontSize: 13, marginBottom: 16 },
+  /* Map */
+  map: {
+    height: 220,
+    borderRadius: 14,
+    marginBottom: 8,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.45)",
+  },
+  coordText: {
+    color: "rgba(40,55,70,0.5)",
+    fontSize: 11,
+    marginBottom: 4,
+    letterSpacing: 0.3,
+  },
+  autoAddress: {
+    color: colors.primary,
+    fontSize: 13,
+    fontWeight: "600",
+    marginBottom: 8,
+  },
 
-  button: { marginTop: 24, borderRadius: 12 },
-  buttonContent: { paddingVertical: 6 },
+  /* Submit */
+  submitBtn: {
+    marginTop: 8,
+    backgroundColor: colors.primary,
+    borderRadius: 14,
+    paddingVertical: 16,
+    alignItems: "center",
+    shadowColor: "#2e4a60",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.28,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  submitText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 14,
+    letterSpacing: 2.5,
+  },
 });
 
 export default CreateRoomScreen;

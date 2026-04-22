@@ -1,27 +1,23 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   FlatList,
   StyleSheet,
   Alert,
   TouchableOpacity,
+  RefreshControl,
 } from "react-native";
-import {
-  Text,
-  ActivityIndicator,
-  Portal,
-  Modal,
-  Button,
-} from "react-native-paper";
+import { Text, ActivityIndicator, Portal, Modal } from "react-native-paper";
+import { LinearGradient } from "expo-linear-gradient";
 import api from "../../services/api";
 import { colors } from "../../theme/colors";
 import { useFocusEffect } from "@react-navigation/native";
-import { useCallback } from "react";
 
 const MyRoomsScreen = () => {
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selected, setSelected] = useState(null); // selected room for modal
+  const [selected, setSelected] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchRooms = async () => {
     try {
@@ -33,10 +29,11 @@ const MyRoomsScreen = () => {
       setLoading(false);
     }
   };
+
   useFocusEffect(
     useCallback(() => {
       fetchRooms();
-    }, []),
+    }, [fetchRooms]),
   );
 
   const handleDelete = async (id) => {
@@ -58,98 +55,147 @@ const MyRoomsScreen = () => {
     ]);
   };
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchRooms();
+    setRefreshing(false);
+  };
+
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color={colors.lavender} />
+        <LinearGradient
+          colors={[
+            colors.gradientStart,
+            colors.gradientMid,
+            colors.gradientEnd,
+          ]}
+          locations={[0, 0.5, 1]}
+          style={StyleSheet.absoluteFillObject}
+        />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <Text variant="headlineMedium" style={styles.title}>
-        My Rooms
-      </Text>
+    <View style={{ flex: 1 }}>
+      <LinearGradient
+        colors={[colors.gradientStart, colors.gradientMid, colors.gradientEnd]}
+        locations={[0, 0.5, 1]}
+        style={StyleSheet.absoluteFillObject}
+      />
+
+      <Text style={styles.title}>My Rooms</Text>
 
       <FlatList
         data={rooms}
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
+          />
+        }
         ListEmptyComponent={
-          <Text style={styles.empty}>No rooms listed yet.</Text>
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyTitle}>No rooms listed yet</Text>
+            <Text style={styles.emptySubtitle}>
+              Add a room from the Add Room tab
+            </Text>
+          </View>
         }
         renderItem={({ item }) => (
-          // simple card — just name, price, status
           <TouchableOpacity
             style={styles.card}
             onPress={() => setSelected(item)}
             activeOpacity={0.8}
           >
-            <View style={styles.row}>
-              <Text variant="titleMedium" style={styles.name}>
+            <View style={styles.cardRow}>
+              <Text style={styles.name} numberOfLines={1}>
                 {item.name}
               </Text>
               <Text style={styles.price}>₹{item.price_per_day}/day</Text>
             </View>
-            <View style={styles.row}>
-              <Text style={styles.address}>📍 {item.address}</Text>
-              <Text
-                style={{
-                  color: item.is_active ? colors.green : colors.red,
-                  fontSize: 12,
-                }}
-              >
-                {item.is_active ? "Active" : "Inactive"}
+            <View style={styles.cardRow}>
+              <Text style={styles.address} numberOfLines={1}>
+                {item.address}
               </Text>
+              <View
+                style={[
+                  styles.statusPill,
+                  {
+                    backgroundColor: item.is_active
+                      ? "rgba(90,158,124,0.15)"
+                      : "rgba(217,83,79,0.12)",
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.statusText,
+                    { color: item.is_active ? colors.success : colors.error },
+                  ]}
+                >
+                  {item.is_active ? "Active" : "Inactive"}
+                </Text>
+              </View>
             </View>
           </TouchableOpacity>
         )}
       />
 
-      {/* room detail modal */}
+      {/* Room detail modal */}
       <Portal>
         <Modal
           visible={!!selected}
           onDismiss={() => setSelected(null)}
-          contentContainerStyle={styles.modal}
+          contentContainerStyle={styles.modalOverlay}
         >
           {selected && (
-            <>
-              <Text variant="titleLarge" style={styles.modalTitle}>
-                {selected.name}
-              </Text>
-              <Text style={styles.modalDetail}>📍 {selected.address}</Text>
-              <Text style={styles.modalDetail}>📞 {selected.phone}</Text>
-              <Text style={styles.modalDetail}>
-                💰 ₹{selected.price_per_day} / day
-              </Text>
-              {selected.description && (
-                <Text style={styles.modalDetail}>
-                  📝 {selected.description}
-                </Text>
-              )}
-              <Text style={styles.modalDetail}>
-                📍 {parseFloat(selected.lat).toFixed(4)},{" "}
-                {parseFloat(selected.lng).toFixed(4)}
-              </Text>
+            <View style={styles.modal}>
+              {/* Modal header */}
+              <Text style={styles.modalTitle}>{selected.name}</Text>
+              <View style={styles.modalDivider} />
 
-              <Button
-                mode="outlined"
-                textColor={colors.red}
-                style={[styles.btn, { borderColor: colors.red }]}
+              {/* Detail rows */}
+              <View style={styles.modalDetails}>
+                <ModalRow label="ADDRESS" value={selected.address} />
+                <ModalRow label="CONTACT" value={selected.phone} />
+                <ModalRow
+                  label="PRICE"
+                  value={`₹${selected.price_per_day} / day`}
+                  accent
+                />
+                {selected.description && (
+                  <ModalRow label="ABOUT" value={selected.description} />
+                )}
+                <ModalRow
+                  label="COORDINATES"
+                  value={`${parseFloat(selected.lat).toFixed(4)}, ${parseFloat(selected.lng).toFixed(4)}`}
+                />
+              </View>
+
+              {/* Actions */}
+              <TouchableOpacity
+                style={styles.deleteBtn}
                 onPress={() => handleDelete(selected.id)}
+                activeOpacity={0.85}
               >
-                Delete Room
-              </Button>
-              <Button
-                mode="text"
-                textColor={colors.subtext}
+                <Text style={styles.deleteBtnText}>Delete Room</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.closeBtn}
                 onPress={() => setSelected(null)}
+                activeOpacity={0.8}
               >
-                Close
-              </Button>
-            </>
+                <Text style={styles.closeBtnText}>Close</Text>
+              </TouchableOpacity>
+            </View>
           )}
         </Modal>
       </Portal>
@@ -157,45 +203,178 @@ const MyRoomsScreen = () => {
   );
 };
 
+const ModalRow = ({ label, value, accent }) => (
+  <View style={modalRowStyles.row}>
+    <Text style={modalRowStyles.label}>{label}</Text>
+    <Text
+      style={[
+        modalRowStyles.value,
+        accent && { color: colors.primary, fontWeight: "700" },
+      ]}
+    >
+      {value}
+    </Text>
+  </View>
+);
+
+const modalRowStyles = StyleSheet.create({
+  row: { marginBottom: 12 },
+  label: {
+    fontSize: 10,
+    letterSpacing: 2,
+    color: "rgba(50,65,80,0.55)",
+    fontWeight: "700",
+    marginBottom: 3,
+  },
+  value: {
+    fontSize: 14,
+    color: colors.textDark,
+    fontWeight: "500",
+    lineHeight: 20,
+  },
+});
+
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 24, backgroundColor: colors.base },
-  center: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: colors.base,
+  content: {
+    padding: 24,
+    paddingBottom: 48,
   },
+  center: { flex: 1, justifyContent: "center", alignItems: "center" },
+
   title: {
-    fontWeight: "bold",
-    marginTop: 48,
-    marginBottom: 16,
+    fontWeight: "700",
+    paddingTop: 56,
+    paddingHorizontal: 24,
+    paddingBottom: 16,
     color: colors.text,
+    fontSize: 26,
+    letterSpacing: 0.2,
   },
+
+  /* Room card */
   card: {
-    backgroundColor: colors.surface0,
+    backgroundColor: "rgba(255,255,255,0.30)",
     padding: 16,
-    borderRadius: 12,
+    borderRadius: 16,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.45)",
+    shadowColor: "#6a8099",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 3,
   },
-  row: {
+  cardRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 4,
+    marginBottom: 6,
   },
-  name: { color: colors.text, fontWeight: "bold", flex: 1 },
-  price: { color: colors.green, fontWeight: "bold" },
-  address: { color: colors.subtext, fontSize: 13, flex: 1 },
-  empty: { color: colors.overlay, textAlign: "center", marginTop: 48 },
-  modal: {
-    backgroundColor: colors.surface0,
+  name: {
+    color: colors.textDark,
+    fontWeight: "700",
+    fontSize: 15,
+    flex: 1,
+    marginRight: 8,
+  },
+  price: {
+    color: colors.primary,
+    fontWeight: "700",
+    fontSize: 13,
+  },
+  address: {
+    color: "rgba(40,55,70,0.55)",
+    fontSize: 12,
+    flex: 1,
+    marginRight: 8,
+  },
+  statusPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 20,
+  },
+  statusText: {
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 0.3,
+  },
+
+  /* Empty state */
+  emptyContainer: {
+    alignItems: "center",
+    marginTop: 64,
+    gap: 8,
+  },
+  emptyTitle: {
+    color: colors.textDark,
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  emptySubtitle: {
+    color: "rgba(40,55,70,0.5)",
+    fontSize: 13,
+    textAlign: "center",
+  },
+
+  /* Modal */
+  modalOverlay: {
     margin: 24,
-    borderRadius: 16,
-    padding: 24,
   },
-  modalTitle: { color: colors.text, fontWeight: "bold", marginBottom: 16 },
-  modalDetail: { color: colors.subtext, marginBottom: 8 },
-  btn: { marginTop: 16, marginBottom: 8 },
+  modal: {
+    backgroundColor: "rgba(225,233,241,0.97)",
+    borderRadius: 22,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.6)",
+    shadowColor: "#6a8099",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  modalTitle: {
+    color: colors.textDark,
+    fontWeight: "700",
+    fontSize: 18,
+    marginBottom: 14,
+    letterSpacing: 0.2,
+  },
+  modalDivider: {
+    height: 1,
+    backgroundColor: "rgba(74,104,128,0.15)",
+    marginBottom: 16,
+  },
+  modalDetails: {
+    marginBottom: 8,
+  },
+  deleteBtn: {
+    borderWidth: 1,
+    borderColor: "rgba(217,83,79,0.4)",
+    backgroundColor: "rgba(217,83,79,0.08)",
+    borderRadius: 12,
+    paddingVertical: 13,
+    alignItems: "center",
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  deleteBtnText: {
+    color: colors.error,
+    fontWeight: "700",
+    fontSize: 14,
+    letterSpacing: 0.3,
+  },
+  closeBtn: {
+    borderRadius: 12,
+    paddingVertical: 11,
+    alignItems: "center",
+    backgroundColor: "rgba(74,104,128,0.1)",
+  },
+  closeBtnText: {
+    color: "rgba(40,55,70,0.6)",
+    fontWeight: "600",
+    fontSize: 14,
+  },
 });
 
 export default MyRoomsScreen;
