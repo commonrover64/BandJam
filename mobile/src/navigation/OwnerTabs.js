@@ -15,9 +15,7 @@ const OwnerTabs = () => (
     screenOptions={{
       headerShown: false,
       tabBarStyle: {
-        backgroundColor: "rgba(184, 201, 217, 0.97)", // gradientStart, near-opaque
-        borderTopWidth: 1,
-        borderTopColor: "rgba(255,255,255,0.5)",
+        backgroundColor: "rgba(184, 201, 217, 0.97)",
         elevation: 0,
         shadowOpacity: 0,
       },
