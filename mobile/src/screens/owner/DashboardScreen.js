@@ -141,7 +141,9 @@ const DashboardScreen = () => {
                 <Text style={styles.bookingRoom} numberOfLines={1}>
                   {b.room_name}
                 </Text>
-                <Text style={styles.bookingDate}>
+                {/* consumer info */}
+                <Text style={styles.consumerName}>
+                  Booked by {b.consumer_name} for{" "}
                   {new Date(b.booking_date).toDateString()}
                 </Text>
               </View>

@@ -70,11 +70,12 @@ const getConsumerBookings = async (consumerId) => {
 };
 
 const getOwnerBookings = async (ownerId) => {
-  // get all bookings for all rooms owned by this owner
   const { rows } = await pool.query(
-    `SELECT b.*, r.name AS room_name, r.address
+    `SELECT b.*, r.name AS room_name, r.address,
+            u.name AS consumer_name
      FROM bookings b
      JOIN rooms r ON b.room_id = r.id
+     JOIN users u ON b.consumer_id = u.id
      WHERE r.owner_id = $1
      ORDER BY b.created_at DESC`,
     [ownerId],
