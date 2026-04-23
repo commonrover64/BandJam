@@ -118,7 +118,7 @@ const RegisterScreen = ({ navigation }) => {
                   role === "consumer" && styles.roleBtnTextActive,
                 ]}
               >
-                🎸 Musician
+                Musician
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -132,7 +132,7 @@ const RegisterScreen = ({ navigation }) => {
                   role === "owner" && styles.roleBtnTextActive,
                 ]}
               >
-                🎙 Room Owner
+                Room Owner
               </Text>
             </TouchableOpacity>
           </View>

@@ -76,7 +76,7 @@ const LoginScreen = ({ navigation }) => {
         {/* App badge */}
         <View style={styles.badgeRow}>
           <View style={styles.iconBadge}>
-            <Text style={styles.badgeEmoji}>🎸</Text>
+            <Text style={styles.badgeEmoji}>Logo Here</Text>
           </View>
           <View>
             <Text style={styles.appLabel}>MY APP</Text>
