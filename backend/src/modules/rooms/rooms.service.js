@@ -54,38 +54,54 @@ const updateRoom = async (ownerId, roomId, updates) => {
   if (!existing[0]) throw new Error("Room not found or unauthorized");
 
   const current = existing[0];
-
   // use incoming value if provided, otherwise keep existing value
   const name = updates.name ?? current.name;
   const description = updates.description ?? current.description;
   const address = updates.address ?? current.address;
   const phone = updates.phone ?? current.phone;
   const price_per_day = updates.price_per_day ?? current.price_per_day;
-
   // for location, only update if both lat and lng are provided
   const lat = updates.lat ?? null;
   const lng = updates.lng ?? null;
 
+  // handle image array update
+  let imageUrls = current.image_url || [];
+
+  // remove images at specified indices (send as array of numbers)
+  if (updates.removed_image_indices) {
+    const removedIndices = Array.isArray(updates.removed_image_indices)
+      ? updates.removed_image_indices.map(Number)
+      : [Number(updates.removed_image_indices)];
+    imageUrls = imageUrls.filter((_, i) => !removedIndices.includes(i));
+  }
+
+  // append new images
+  if (updates.newImageUrls && updates.newImageUrls.length > 0) {
+    imageUrls = [...imageUrls, ...updates.newImageUrls];
+  }
+
+  // cap at 3
+  imageUrls = imageUrls.slice(0, 3);
+
   const { rows } = await pool.query(
     `UPDATE rooms
-     SET name = $1,
-         description = $2,
-         address = $3,
-         phone = $4,
-         price_per_day = $5,
+     SET name = $1, description = $2, address = $3,
+         phone = $4, price_per_day = $5,
+         image_url = $6,
          location = CASE
-           WHEN $6::float IS NOT NULL AND $7::float IS NOT NULL
-           THEN ST_SetSRID(ST_MakePoint($7, $6), 4326)
+           WHEN $7::float IS NOT NULL AND $8::float IS NOT NULL
+           THEN ST_SetSRID(ST_MakePoint($8, $7), 4326)
            ELSE location
          END
-     WHERE id = $8 AND owner_id = $9
-     RETURNING id, name, description, address, phone, price_per_day, is_active`,
+     WHERE id = $9 AND owner_id = $10
+     RETURNING id, name, description, address, phone, price_per_day, is_active, image_url`,
     [
       name,
       description,
       address,
       phone,
       price_per_day,
+      imageUrls,
       lat,
       lng,
       roomId,
@@ -176,6 +192,17 @@ const searchRooms = async ({
   return rows;
 };
 
+const toggleRoomActive = async (ownerId, roomId) => {
+  const { rows } = await pool.query(
+    `UPDATE rooms SET is_active = NOT is_active
+     WHERE id = $1 AND owner_id = $2
+     RETURNING id, is_active`,
+    [roomId, ownerId],
+  );
+  if (!rows[0]) throw new Error("Room not found or unauthorized");
+  return rows[0];
+};
+
 module.exports = {
   createRoom,
   getRoomById,
@@ -183,4 +210,5 @@ module.exports = {
   deleteRoom,
   getOwnerRooms,
   searchRooms,
+  toggleRoomActive,
 };

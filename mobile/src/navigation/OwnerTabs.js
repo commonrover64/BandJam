@@ -3,7 +3,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import DashboardScreen from "../screens/owner/DashboardScreen";
 import MyRoomsScreen from "../screens/owner/MyRoomsScreen";
-import CreateRoomScreen from "../screens/owner/CreateRoomScreen";
+import RoomFormScreen from "../screens/owner/RoomFormScreen";
 import OnboardingScreen from "../screens/owner/OnboardingScreen";
 import ProfileScreen from "../screens/shared/ProfileScreen";
 import { colors } from "../theme/colors";
@@ -47,7 +47,7 @@ const OwnerTabs = () => (
     />
     <Tab.Screen
       name="Add Room"
-      component={CreateRoomScreen}
+      component={RoomFormScreen}
       options={{
         tabBarIcon: ({ color }) => (
           <MaterialCommunityIcons name="plus-circle" size={24} color={color} />

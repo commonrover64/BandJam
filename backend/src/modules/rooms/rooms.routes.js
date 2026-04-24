@@ -7,6 +7,7 @@ const {
   remove,
   myRooms,
   search,
+  toggleActive,
 } = require("./rooms.controller");
 const authenticate = require("../../middleware/authenticate");
 const requireRole = require("../../middleware/requireRole");
@@ -36,5 +37,11 @@ router.patch(
 );
 router.delete("/:id", authenticate, requireRole("owner"), remove);
 router.get("/owner/me", authenticate, requireRole("owner"), myRooms); // fetches all rooms belonging to the logged in owner
+router.patch(
+  "/:id/toggle-active",
+  authenticate,
+  requireRole("owner"),
+  toggleActive,
+);
 
 module.exports = router;

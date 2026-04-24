@@ -11,13 +11,14 @@ import { Text, ActivityIndicator, Portal, Modal } from "react-native-paper";
 import { LinearGradient } from "expo-linear-gradient";
 import api from "../../services/api";
 import { colors } from "../../theme/colors";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 
 const MyRoomsScreen = () => {
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const navigation = useNavigation();
 
   const fetchRooms = async () => {
     try {
@@ -59,6 +60,23 @@ const MyRoomsScreen = () => {
     setRefreshing(true);
     await fetchRooms();
     setRefreshing(false);
+  };
+
+  const handleToggleActive = async (id) => {
+    try {
+      const res = await api.patch(`/rooms/${id}/toggle-active`);
+      // update local state so UI reflects immediately
+      setRooms((prev) =>
+        prev.map((r) =>
+          r.id === id ? { ...r, is_active: res.data.room.is_active } : r,
+        ),
+      );
+      setSelected((prev) =>
+        prev ? { ...prev, is_active: res.data.room.is_active } : null,
+      );
+    } catch {
+      Alert.alert("Error", "Could not update room status");
+    }
   };
 
   if (loading) {
@@ -182,12 +200,53 @@ const MyRoomsScreen = () => {
 
               {/* Actions */}
               <TouchableOpacity
+                style={[
+                  styles.toggleBtn,
+                  {
+                    backgroundColor: selected.is_active
+                      ? "rgba(217,83,79,0.08)"
+                      : "rgba(90,158,124,0.1)",
+                    borderColor: selected.is_active
+                      ? "rgba(217,83,79,0.3)"
+                      : "rgba(90,158,124,0.3)",
+                  },
+                ]}
+                onPress={() => handleToggleActive(selected.id)}
+                activeOpacity={0.85}
+              >
+                <Text
+                  style={[
+                    styles.toggleBtnText,
+                    {
+                      color: selected.is_active ? colors.error : colors.success,
+                    },
+                  ]}
+                >
+                  {selected.is_active ? "Mark as Inactive" : "Mark as Active"}
+                </Text>
+              </TouchableOpacity>
+
+              {/* Edit button */}
+              <TouchableOpacity
+                style={styles.editBtn}
+                onPress={() => {
+                  navigation.navigate("Add Room", { room: selected });
+                  setSelected(null);
+                }}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.editBtnText}>Edit Room</Text>
+              </TouchableOpacity>
+
+              {/* Delete */}
+              <TouchableOpacity
                 style={styles.deleteBtn}
                 onPress={() => handleDelete(selected.id)}
                 activeOpacity={0.85}
               >
                 <Text style={styles.deleteBtnText}>Delete Room</Text>
               </TouchableOpacity>
+
               <TouchableOpacity
                 style={styles.closeBtn}
                 onPress={() => setSelected(null)}
@@ -374,6 +433,34 @@ const styles = StyleSheet.create({
     color: "rgba(40,55,70,0.6)",
     fontWeight: "600",
     fontSize: 14,
+  },
+  toggleBtn: {
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: 13,
+    alignItems: "center",
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  toggleBtnText: {
+    fontWeight: "700",
+    fontSize: 14,
+    letterSpacing: 0.3,
+  },
+  editBtn: {
+    backgroundColor: "rgba(74,104,128,0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(74,104,128,0.25)",
+    borderRadius: 12,
+    paddingVertical: 13,
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  editBtnText: {
+    color: colors.primary,
+    fontWeight: "700",
+    fontSize: 14,
+    letterSpacing: 0.3,
   },
 });
 

@@ -5,6 +5,7 @@ const {
   deleteRoom,
   getOwnerRooms,
   searchRooms,
+  toggleRoomActive,
 } = require("./rooms.service");
 
 const create = async (req, res) => {
@@ -38,7 +39,14 @@ const getOne = async (req, res) => {
 
 const update = async (req, res) => {
   try {
-    const room = await updateRoom(req.user.id, req.params.id, req.body);
+    const baseUrl = `${req.protocol}://${req.get("host")}/uploads/`;
+    const files = req.files || [];
+    const newImageUrls = files.map((f) => baseUrl + f.filename);
+
+    const room = await updateRoom(req.user.id, req.params.id, {
+      ...req.body,
+      newImageUrls,
+    });
     res.status(200).json({ success: true, room });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
@@ -89,4 +97,21 @@ const search = async (req, res) => {
   }
 };
 
-module.exports = { create, getOne, update, remove, myRooms, search };
+const toggleActive = async (req, res) => {
+  try {
+    const room = await toggleRoomActive(req.user.id, req.params.id);
+    res.status(200).json({ success: true, room });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+module.exports = {
+  create,
+  getOne,
+  update,
+  remove,
+  myRooms,
+  search,
+  toggleActive,
+};

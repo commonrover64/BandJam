@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   StyleSheet,
@@ -11,19 +11,32 @@ import { Text, TextInput } from "react-native-paper";
 import MapView, { Marker } from "react-native-maps";
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
+import {
+  useNavigation,
+  useFocusEffect,
+  useRoute,
+} from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import api from "../../services/api";
 import { colors } from "../../theme/colors";
 
 const MAX_PHOTOS = 3;
 
-const CreateRoomScreen = () => {
+const RoomFormScreen = () => {
+  const navigation = useNavigation();
+  const route = useRoute();
+
+  // ── Read room param safely ─────────────────────────────
+  const roomParam = route.params?.room || null;
+  const isEdit = !!roomParam;
+
+  // ── State ─────────────────────────────────────────────
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
   const [price, setPrice] = useState("");
-  const [images, setImages] = useState([]);
+  const [images, setImages] = useState([]); // newly picked images
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [addressMode, setAddressMode] = useState("text");
@@ -31,6 +44,44 @@ const CreateRoomScreen = () => {
     latitude: 20.5937,
     longitude: 78.9629,
   });
+  const [removedExisting, setRemovedExisting] = useState([]);
+
+  // ── Initialize / Reset when screen gains focus ───────
+  useFocusEffect(
+    useCallback(() => {
+      if (roomParam) {
+        setName(roomParam.name || "");
+        setDescription(roomParam.description || "");
+        setAddress(roomParam.address || "");
+        setPhone(roomParam.phone || "");
+        setPrice(roomParam.price_per_day?.toString() || "");
+        setLocation({
+          latitude: roomParam.lat ? parseFloat(roomParam.lat) : 20.5937,
+          longitude: roomParam.lng ? parseFloat(roomParam.lng) : 78.9629,
+        });
+        setImages([]);
+        setRemovedExisting([]);
+        setErrors({});
+        setAddressMode("text");
+      } else {
+        setName("");
+        setDescription("");
+        setAddress("");
+        setPhone("");
+        setPrice("");
+        setImages([]);
+        setRemovedExisting([]);
+        setLocation({ latitude: 20.5937, longitude: 78.9629 });
+        setErrors({});
+        setAddressMode("text");
+      }
+      // no cleanup needed here
+    }, [roomParam]),
+  );
+
+  const resetToAddMode = () => {
+    navigation.setParams({ room: undefined });
+  };
 
   const validate = () => {
     const e = {};
@@ -42,8 +93,17 @@ const CreateRoomScreen = () => {
     return Object.keys(e).length === 0;
   };
 
+  const totalPhotoCount = () => {
+    const existingKept = (roomParam?.image_url || []).filter(
+      (_, i) => !removedExisting.includes(i),
+    ).length;
+    return existingKept + images.length;
+  };
+
+  const canAddPhoto = () => totalPhotoCount() < MAX_PHOTOS;
+
   const pickFromGallery = async () => {
-    if (images.length >= MAX_PHOTOS) {
+    if (!canAddPhoto()) {
       Alert.alert("Limit reached", `You can upload up to ${MAX_PHOTOS} photos`);
       return;
     }
@@ -65,7 +125,7 @@ const CreateRoomScreen = () => {
   };
 
   const takePhoto = async () => {
-    if (images.length >= MAX_PHOTOS) {
+    if (!canAddPhoto()) {
       Alert.alert("Limit reached", `You can upload up to ${MAX_PHOTOS} photos`);
       return;
     }
@@ -86,6 +146,10 @@ const CreateRoomScreen = () => {
     setImages((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const removeExistingPhoto = (originalIndex) => {
+    setRemovedExisting((prev) => [...prev, originalIndex]);
+  };
+
   const handleMapPress = async (e) => {
     const coords = e.nativeEvent.coordinate;
     setLocation(coords);
@@ -104,36 +168,42 @@ const CreateRoomScreen = () => {
     }
   };
 
+  const buildFormData = () => {
+    const formData = new FormData();
+    formData.append("name", name);
+    formData.append("description", description);
+    formData.append("address", address);
+    formData.append("phone", phone);
+    formData.append("price_per_day", price);
+    formData.append("lat", location.latitude.toString());
+    formData.append("lng", location.longitude.toString());
+
+    if (isEdit && removedExisting.length > 0) {
+      removedExisting.forEach((idx) => {
+        formData.append("removed_image_indices", idx.toString());
+      });
+    }
+
+    images.forEach((img, index) => {
+      formData.append("images", {
+        uri: img.uri,
+        name: `room_${index + 1}.jpg`,
+        type: "image/jpeg",
+      });
+    });
+
+    return formData;
+  };
+
   const handleCreate = async () => {
     if (!validate()) return;
     try {
       setLoading(true);
-      const formData = new FormData();
-      formData.append("name", name);
-      formData.append("description", description);
-      formData.append("address", address);
-      formData.append("phone", phone);
-      formData.append("price_per_day", price);
-      formData.append("lat", location.latitude.toString());
-      formData.append("lng", location.longitude.toString());
-      images.forEach((img, index) => {
-        formData.append("images", {
-          uri: img.uri,
-          name: `room_${index + 1}.jpg`,
-          type: "image/jpeg",
-        });
-      });
-      await api.post("/rooms", formData, {
+      await api.post("/rooms", buildFormData(), {
         headers: { "Content-Type": "multipart/form-data" },
       });
       Alert.alert("Success", "Room listed successfully!");
-      setName("");
-      setDescription("");
-      setAddress("");
-      setPhone("");
-      setPrice("");
-      setImages([]);
-      setErrors({});
+      resetToAddMode(); // clear params so screen returns to add mode
     } catch (err) {
       Alert.alert(
         "Error",
@@ -144,6 +214,51 @@ const CreateRoomScreen = () => {
     }
   };
 
+  const handleSave = async () => {
+    if (!validate()) return;
+    try {
+      setLoading(true);
+      await api.patch(`/rooms/${roomParam.id}`, buildFormData(), {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      Alert.alert("Success", "Room updated successfully!", [
+        {
+          text: "OK",
+          onPress: () => {
+            resetToAddMode();
+            navigation.goBack();
+          },
+        },
+      ]);
+    } catch (err) {
+      Alert.alert(
+        "Error",
+        err.response?.data?.message || "Something went wrong",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ── Photo helpers for rendering ────────────────────────
+  const existingPhotos = (roomParam?.image_url || [])
+    .map((url, i) => ({
+      type: "existing",
+      url,
+      originalIndex: i,
+      isRemoved: removedExisting.includes(i),
+    }))
+    .filter((p) => !p.isRemoved);
+
+  const newPhotos = images.map((img, i) => ({
+    type: "new",
+    uri: img.uri,
+    index: i,
+  }));
+
+  const allPhotos = [...existingPhotos, ...newPhotos];
+  const emptySlots = MAX_PHOTOS - allPhotos.length;
+
   const inputTheme = {
     colors: {
       primary: "transparent",
@@ -152,6 +267,7 @@ const CreateRoomScreen = () => {
     },
   };
 
+  // ── Render ─────────────────────────────────────────────
   return (
     <View style={{ flex: 1 }}>
       <LinearGradient
@@ -160,67 +276,92 @@ const CreateRoomScreen = () => {
         style={StyleSheet.absoluteFillObject}
       />
 
-      {/* Fixed title */}
-      <Text style={styles.title}>List a Room</Text>
+      {/* header */}
+      {isEdit && (
+        <TouchableOpacity
+          onPress={() => {
+            resetToAddMode();
+            navigation.goBack();
+          }}
+          style={styles.backBtn}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.backText}>← Back</Text>
+        </TouchableOpacity>
+      )}
+      <Text style={[styles.title, isEdit && { paddingTop: 8 }]}>
+        {isEdit ? "Edit Room" : "List a Room"}
+      </Text>
 
       <ScrollView
-        style={styles.container}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Photo section */}
+        {/* Photos card */}
         <View style={styles.card}>
           <Text style={styles.sectionLabel}>
-            ROOM PHOTOS ({images.length}/{MAX_PHOTOS})
+            {isEdit ? "ROOM PHOTOS" : "ROOM PHOTOS"} ({allPhotos.length}/
+            {MAX_PHOTOS})
           </Text>
 
+          {/* Photo grid: existing + new + empty slots */}
           <View style={styles.photoGrid}>
-            {Array.from({ length: MAX_PHOTOS }).map((_, index) => {
-              const img = images[index];
-              return img ? (
-                // Filled slot
-                <View key={index} style={styles.photoSlot}>
-                  <Image source={{ uri: img.uri }} style={styles.slotImage} />
-                  {index === 0 && (
-                    <View style={styles.mainBadge}>
-                      <Text style={styles.mainBadgeText}>MAIN</Text>
-                    </View>
-                  )}
-                  <TouchableOpacity
-                    style={styles.removeBtn}
-                    onPress={() => removeImage(index)}
-                  >
-                    <Text style={styles.removeBtnText}>✕</Text>
-                  </TouchableOpacity>
-                </View>
-              ) : (
-                // Empty slot
+            {allPhotos.map((photo, displayIndex) => (
+              <View
+                key={`${photo.type}-${photo.type === "existing" ? photo.originalIndex : photo.index}`}
+                style={styles.previewWrapper}
+              >
+                <Image
+                  source={{
+                    uri: photo.type === "existing" ? photo.url : photo.uri,
+                  }}
+                  style={styles.previewImage}
+                />
                 <TouchableOpacity
-                  key={index}
-                  style={styles.photoSlot}
-                  onPress={pickFromGallery}
-                  activeOpacity={0.75}
+                  style={styles.removeBtn}
+                  onPress={() =>
+                    photo.type === "existing"
+                      ? removeExistingPhoto(photo.originalIndex)
+                      : removeImage(photo.index)
+                  }
                 >
-                  <View style={styles.emptySlotInner}>
-                    <Text style={styles.emptyPlus}>+</Text>
-                    <Text style={styles.emptySlotText}>
-                      {index === 0 ? "Add Main Photo" : "Add Photo"}
-                    </Text>
-                  </View>
+                  <Text style={styles.removeBtnText}>✕</Text>
                 </TouchableOpacity>
-              );
-            })}
+                {displayIndex === 0 && (
+                  <View style={styles.mainBadge}>
+                    <Text style={styles.mainBadgeText}>MAIN</Text>
+                  </View>
+                )}
+              </View>
+            ))}
+
+            {/* Empty slots become add buttons */}
+            {Array.from({ length: emptySlots }).map((_, i) => (
+              <TouchableOpacity
+                key={`empty-${i}`}
+                style={styles.photoSlot}
+                onPress={pickFromGallery}
+                activeOpacity={0.75}
+              >
+                <Text style={styles.emptyPlus}>+</Text>
+                <Text style={styles.emptySlotText}>
+                  {allPhotos.length === 0 && i === 0 ? "Add Main" : "Add Photo"}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
 
-          {/* Camera option */}
-          <TouchableOpacity
-            style={styles.cameraRow}
-            onPress={takePhoto}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.cameraText}>Take a photo instead</Text>
-          </TouchableOpacity>
+          {/* Camera option only if there's room */}
+          {canAddPhoto() && (
+            <TouchableOpacity
+              style={styles.cameraRow}
+              onPress={takePhoto}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.cameraText}>Take a photo instead</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Room details card */}
@@ -310,7 +451,6 @@ const CreateRoomScreen = () => {
         <View style={styles.card}>
           <Text style={styles.sectionLabel}>LOCATION</Text>
 
-          {/* Address mode toggle */}
           <View style={styles.addressToggle}>
             <TouchableOpacity
               style={[
@@ -375,14 +515,18 @@ const CreateRoomScreen = () => {
             </>
           ) : (
             <>
-              <Text style={styles.hint}>Tap on the map to drop a pin</Text>
+              <Text style={styles.hint}>
+                {isEdit
+                  ? "Tap to move the pin"
+                  : "Tap on the map to drop a pin"}
+              </Text>
               <MapView
                 style={styles.map}
                 initialRegion={{
                   latitude: location.latitude,
                   longitude: location.longitude,
-                  latitudeDelta: 5,
-                  longitudeDelta: 5,
+                  latitudeDelta: isEdit ? 0.05 : 5,
+                  longitudeDelta: isEdit ? 0.05 : 5,
                 }}
                 onPress={handleMapPress}
               >
@@ -406,12 +550,18 @@ const CreateRoomScreen = () => {
         {/* Submit */}
         <TouchableOpacity
           style={[styles.submitBtn, loading && { opacity: 0.7 }]}
-          onPress={handleCreate}
+          onPress={isEdit ? handleSave : handleCreate}
           disabled={loading}
           activeOpacity={0.85}
         >
           <Text style={styles.submitText}>
-            {loading ? "LISTING…" : "LIST ROOM"}
+            {loading
+              ? isEdit
+                ? "SAVING…"
+                : "LISTING…"
+              : isEdit
+                ? "SAVE CHANGES"
+                : "LIST ROOM"}
           </Text>
         </TouchableOpacity>
       </ScrollView>
@@ -420,9 +570,19 @@ const CreateRoomScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  content: { padding: 24, paddingBottom: 48 },
-
+  /* Fixed header */
+  backBtn: {
+    paddingHorizontal: 24,
+    paddingTop: 56,
+    paddingBottom: 4,
+    alignSelf: "flex-start",
+  },
+  backText: {
+    color: "rgba(255,255,255,0.75)",
+    fontSize: 15,
+    fontWeight: "600",
+    letterSpacing: 0.3,
+  },
   title: {
     fontWeight: "700",
     color: colors.text,
@@ -432,6 +592,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingBottom: 16,
   },
+
+  content: { paddingHorizontal: 24, paddingBottom: 48 },
 
   /* Cards */
   card: {
@@ -463,7 +625,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
 
-  /* Input */
+  /* Inputs */
   inputWrapper: {
     backgroundColor: "rgba(255,255,255,0.72)",
     borderRadius: 12,
@@ -472,10 +634,7 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.45)",
     marginBottom: 2,
   },
-  input: {
-    backgroundColor: "transparent",
-    fontSize: 14,
-  },
+  input: { backgroundColor: "transparent", fontSize: 14 },
   errorText: {
     color: colors.error,
     fontSize: 11,
@@ -489,27 +648,51 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
 
-  /* Photo section */
+  /* Photo section — unified grid */
   photoGrid: {
     flexDirection: "row",
     gap: 10,
     marginBottom: 10,
+    flexWrap: "wrap",
   },
-  photoSlot: {
-    flex: 1,
-    height: 100,
-    borderRadius: 14,
+  previewWrapper: {
+    width: 110,
+    height: 80,
+    borderRadius: 12,
     overflow: "hidden",
     position: "relative",
   },
-  slotImage: {
-    width: "100%",
-    height: "100%",
-    resizeMode: "cover",
+  previewImage: { width: "100%", height: "100%" },
+  removeBtn: {
+    position: "absolute",
+    top: 4,
+    right: 4,
+    backgroundColor: "rgba(0,0,0,0.55)",
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
   },
-  emptySlotInner: {
-    flex: 1,
-    height: 100,
+  removeBtnText: { color: "#fff", fontSize: 10, fontWeight: "700" },
+  mainBadge: {
+    position: "absolute",
+    bottom: 4,
+    left: 4,
+    backgroundColor: colors.primary,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  mainBadgeText: {
+    color: "#fff",
+    fontSize: 8,
+    fontWeight: "700",
+    letterSpacing: 1,
+  },
+  photoSlot: {
+    width: 90,
+    height: 80,
     backgroundColor: "rgba(255,255,255,0.35)",
     borderRadius: 14,
     borderWidth: 1.5,
@@ -530,43 +713,8 @@ const styles = StyleSheet.create({
     color: "rgba(40,55,70,0.5)",
     fontWeight: "600",
     letterSpacing: 0.3,
-    textAlign: "center",
   },
-  mainBadge: {
-    position: "absolute",
-    bottom: 6,
-    left: 6,
-    backgroundColor: colors.primary,
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  mainBadgeText: {
-    color: "#fff",
-    fontSize: 8,
-    fontWeight: "700",
-    letterSpacing: 1,
-  },
-  removeBtn: {
-    position: "absolute",
-    top: 5,
-    right: 5,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  removeBtnText: {
-    color: "#fff",
-    fontSize: 10,
-    fontWeight: "700",
-  },
-  cameraRow: {
-    alignItems: "center",
-    paddingVertical: 6,
-  },
+  cameraRow: { alignItems: "center", paddingVertical: 4 },
   cameraText: {
     color: colors.primary,
     fontSize: 12,
@@ -585,12 +733,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.4)",
   },
-  toggleBtn: {
-    flex: 1,
-    padding: 10,
-    borderRadius: 10,
-    alignItems: "center",
-  },
+  toggleBtn: { flex: 1, padding: 10, borderRadius: 10, alignItems: "center" },
   toggleActive: { backgroundColor: colors.primary },
   toggleText: { color: "rgba(40,55,70,0.65)", fontSize: 13, fontWeight: "600" },
   toggleTextActive: { color: "#fff", fontWeight: "700" },
@@ -638,4 +781,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CreateRoomScreen;
+export default RoomFormScreen;
