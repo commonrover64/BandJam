@@ -19,11 +19,14 @@ import PaginationBar from "../../components/PaginationBar";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import { LinearGradient } from "expo-linear-gradient";
 import { colors } from "../../theme/colors";
+import { useAuth } from "../../context/AuthContext";
 
 const PAGE_SIZE = 10;
 
 const SearchScreen = () => {
   const navigation = useNavigation();
+  const { user } = useAuth();
+
   const [rooms, setRooms] = useState([]);
   const [recentRooms, setRecentRooms] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -116,7 +119,9 @@ const SearchScreen = () => {
           style={styles.profileBtn}
           onPress={() => navigation.navigate("Profile")}
         >
-          <Text style={styles.profileInitial}>P</Text>
+          <Text style={styles.profileInitial}>
+            {user?.name?.charAt(0).toUpperCase()}
+          </Text>
         </TouchableOpacity>
       </View>
 
