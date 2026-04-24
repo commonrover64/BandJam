@@ -1,13 +1,20 @@
 import React, { useState, useCallback } from "react";
-import { View, StyleSheet, ScrollView, RefreshControl } from "react-native";
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  RefreshControl,
+  TouchableOpacity,
+} from "react-native";
 import { Text, ActivityIndicator } from "react-native-paper";
 import { LinearGradient } from "expo-linear-gradient";
 import api from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
 import { colors } from "../../theme/colors";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 
 const DashboardScreen = () => {
+  const navigation = useNavigation();
   const { user } = useAuth();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -83,10 +90,21 @@ const DashboardScreen = () => {
         style={StyleSheet.absoluteFillObject}
       />
 
-      {/* Fixed header */}
-      <View style={styles.fixedHeader}>
-        <Text style={styles.title}>Hey, {user?.name}</Text>
-        <Text style={styles.subtitle}>Here's your overview</Text>
+      {/* header */}
+      <View style={styles.headerRow}>
+        <View>
+          <Text style={styles.title}>Hey, {user?.name}</Text>
+          <Text style={styles.subtitle}>Here's your overview</Text>
+        </View>
+
+        <TouchableOpacity
+          style={styles.profileBtn}
+          onPress={() => navigation.navigate("Profile")}
+        >
+          <Text style={styles.profileInitial}>
+            {user?.name?.charAt(0).toUpperCase()}
+          </Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -171,7 +189,11 @@ const styles = StyleSheet.create({
   container: { flexGrow: 1, padding: 24, paddingBottom: 48 },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
 
-  fixedHeader: {
+  /* Header */
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
     paddingHorizontal: 24,
     paddingTop: 56,
     paddingBottom: 12,
@@ -188,6 +210,23 @@ const styles = StyleSheet.create({
   subtitle: {
     color: "rgba(255,255,255,0.65)",
     fontSize: 13,
+  },
+
+  /* Profile button */
+  profileBtn: {
+    backgroundColor: "rgba(74, 104, 128, 0.75)",
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.3)",
+  },
+  profileInitial: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 15,
   },
 
   /* Stat cards */
