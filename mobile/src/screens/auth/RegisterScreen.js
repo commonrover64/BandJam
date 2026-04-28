@@ -21,11 +21,15 @@ const RegisterScreen = ({ navigation }) => {
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("consumer");
   const [showPassword, setShowPassword] = useState(false);
+  const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
   const validate = () => {
     const newErrors = {};
+    if (!phone.trim()) newErrors.phone = "Phone number is required";
+    else if (!/^[0-9]{10}$/.test(phone))
+      newErrors.phone = "Enter a valid 10 digit number";
     if (!name.trim()) newErrors.name = "Name is required";
     if (!email) newErrors.email = "Email is required";
     else if (!/^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/.test(email))
@@ -41,7 +45,7 @@ const RegisterScreen = ({ navigation }) => {
     if (!validate()) return;
     try {
       setLoading(true);
-      await register(name, email, password, role);
+      await register(name, email, password, role, phone);
       Alert.alert("Account created!", "Please login to continue.");
       navigation.navigate("Login");
     } catch (err) {
@@ -178,6 +182,33 @@ const RegisterScreen = ({ navigation }) => {
             />
           </View>
           {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+
+          {/* phone  */}
+          <Text style={[styles.fieldLabel, { marginTop: 16 }]}>PHONE</Text>
+          <View style={styles.inputWrapper}>
+          <TextInput
+            placeholder="Phone number"
+            placeholderTextColor={colors.placeholder}
+            value={phone}
+            onChangeText={(v) => {
+              setPhone(v);
+              setErrors((e) => ({ ...e, phone: null }));
+            }}
+            keyboardType="phone-pad"
+            underlineColor="transparent"
+            activeUnderlineColor="transparent"
+            style={styles.input}
+            theme={{
+              colors: {
+                primary: "transparent",
+                onSurfaceVariant: colors.placeholder,
+                error: colors.error,
+              },
+            }}
+            error={!!errors.phone}
+          />
+          </View>
+          {errors.phone && <Text style={styles.errorText}>{errors.phone}</Text>}
 
           {/* Password */}
           <Text style={[styles.fieldLabel, { marginTop: 12 }]}>PASSWORD</Text>

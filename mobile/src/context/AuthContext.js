@@ -38,12 +38,13 @@ export const AuthProvider = ({ children }) => {
     return user; // return user so navigator knows which role to redirect to
   };
 
-  const register = async (name, email, password, role) => {
+  const register = async (name, email, password, role, phone) => {
     const res = await api.post("/auth/register", {
       name,
       email,
       password,
       role,
+      phone
     });
     return res.data;
   };

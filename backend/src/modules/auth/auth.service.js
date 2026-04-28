@@ -4,7 +4,11 @@ const jwt = require("jsonwebtoken");
 const transporter = require("../../config/mailer");
 
 // register a new user (owner or consumer)
-const registerUser = async ({ name, email, password, role }) => {
+const registerUser = async ({ name, email, password, role, phone }) => {
+
+  if(!phone) {
+    throw new Error("Phone number is required");
+  }
   // check if email already exists
   const existing = await pool.query("SELECT id FROM users WHERE email = $1", [
     email,
@@ -17,10 +21,10 @@ const registerUser = async ({ name, email, password, role }) => {
   const hashed = await bcrypt.hash(password, 10);
 
   const { rows } = await pool.query(
-    `INSERT INTO users (name, email, password, role)
-     VALUES ($1, $2, $3, $4)
-     RETURNING id, name, email, role`,
-    [name, email, hashed, role],
+    `INSERT INTO users (name, email, password, role, phone)
+     VALUES ($1, $2, $3, $4, $5)
+     RETURNING id, name, email, role, phone`,
+    [name, email, hashed, role, phone],
   );
 
   return rows[0];
