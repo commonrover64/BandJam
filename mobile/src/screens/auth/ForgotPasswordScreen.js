@@ -7,20 +7,25 @@ import {
   ScrollView,
   Platform,
   StatusBar,
+  Image,
 } from "react-native";
 import { Text, TextInput } from "react-native-paper";
 import { LinearGradient } from "expo-linear-gradient";
 import { colors } from "../../theme/colors";
 import api from "../../services/api";
+import Svg, { Path } from "react-native-svg";
 
 const ForgotPasswordScreen = ({ navigation }) => {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
-  const [step, setStep] = useState(1); // 1: email, 2: otp+newpassword, 3: success
+  const [step, setStep] = useState(1); // 1: email+otp, 2: newpassword+confirm, 3: success
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
 
   const validate = () => {
     const newErrors = {};
@@ -36,7 +41,8 @@ const ForgotPasswordScreen = ({ navigation }) => {
     try {
       setLoading(true);
       await api.post("/auth/forgot-password", { email });
-      setStep(2);
+      setOtpSent(true);
+      setErrors({});
     } catch (err) {
       setErrors({
         email: err.response?.data?.message || "Something went wrong",
@@ -46,10 +52,31 @@ const ForgotPasswordScreen = ({ navigation }) => {
     }
   };
 
+  const handleVerifyOtp = async () => {
+    if (!otp) {
+      setErrors({ otp: "OTP is required" });
+      return;
+    }
+    setStep(2);
+    setErrors({});
+  };
+
   const handleReset = async () => {
-    if (!otp || !newPassword) return;
+    if (!newPassword || !confirmPassword) {
+      setErrors({
+        password: !newPassword ? "Password is required" : undefined,
+        confirmPassword: !confirmPassword
+          ? "Confirm password is required"
+          : undefined,
+      });
+      return;
+    }
     if (newPassword.length < 6) {
       setErrors({ password: "Password must be at least 6 characters" });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setErrors({ confirmPassword: "Passwords do not match" });
       return;
     }
     try {
@@ -57,7 +84,9 @@ const ForgotPasswordScreen = ({ navigation }) => {
       await api.post("/auth/reset-password", { email, otp, newPassword });
       setStep(3);
     } catch (err) {
-      setErrors({ otp: err.response?.data?.message || "Something went wrong" });
+      setErrors({
+        password: err.response?.data?.message || "Something went wrong",
+      });
     } finally {
       setLoading(false);
     }
@@ -94,16 +123,23 @@ const ForgotPasswordScreen = ({ navigation }) => {
           onPress={() => navigation.goBack()}
           activeOpacity={0.7}
         >
-          <Text style={styles.backText}>← Back</Text>
+          <Text style={styles.backText}>←</Text>
         </TouchableOpacity>
 
         {/* App badge */}
         <View style={styles.badgeRow}>
           <View style={styles.iconBadge}>
-            <Text style={styles.badgeEmoji}>🔑</Text>
+            <Svg
+              width={35}
+              height={35}
+              viewBox="0 0 16 16"
+              fill={colors.primary} // or "#fff" or whatever color matches your theme
+            >
+              <Path d="M0 8a4 4 0 0 1 7.465-2H14a.5.5 0 0 1 .354.146l1.5 1.5a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0L13 9.207l-.646.647a.5.5 0 0 1-.708 0L11 9.207l-.646.647a.5.5 0 0 1-.708 0L9 9.207l-.646.647A.5.5 0 0 1 8 10h-.535A4 4 0 0 1 0 8m4-3a3 3 0 1 0 2.712 4.285A.5.5 0 0 1 7.163 9h.63l.853-.854a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .708 0l.646.647.793-.793-1-1h-6.63a.5.5 0 0 1-.451-.285A3 3 0 0 0 4 5" />
+              <Path d="M4 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0" />
+            </Svg>
           </View>
           <View>
-            <Text style={styles.appLabel}>MY APP</Text>
             <Text style={styles.appTitle}>Reset password</Text>
           </View>
         </View>
@@ -112,10 +148,9 @@ const ForgotPasswordScreen = ({ navigation }) => {
         <View style={styles.card}>
           {step === 1 && (
             <>
-              <Text style={styles.hint}>
-                Enter your registered email and we'll send you a reset OTP.
+              <Text style={[styles.fieldLabel, { marginTop: 12 }]}>
+                REGISTERED EMAIL
               </Text>
-              <Text style={[styles.fieldLabel, { marginTop: 12 }]}>EMAIL</Text>
               <View style={styles.inputWrapper}>
                 <TextInput
                   placeholder="you@example.com"
@@ -142,50 +177,80 @@ const ForgotPasswordScreen = ({ navigation }) => {
                 <Text style={styles.errorText}>{errors.email}</Text>
               )}
 
-              <TouchableOpacity
-                style={[styles.submitBtn, loading && { opacity: 0.7 }]}
-                onPress={handleSend}
-                disabled={loading}
-                activeOpacity={0.85}
-              >
-                <Text style={styles.submitText}>
-                  {loading ? "SENDING…" : "SEND OTP"}
-                </Text>
-              </TouchableOpacity>
+              {!otpSent ? (
+                <TouchableOpacity
+                  style={[styles.submitBtn, loading && { opacity: 0.7 }]}
+                  onPress={handleSend}
+                  disabled={loading}
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.submitText}>
+                    {loading ? "SENDING…" : "SEND OTP"}
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <>
+                  <Text style={[styles.fieldLabel, { marginTop: 12 }]}>
+                    OTP
+                  </Text>
+                  <View style={styles.inputWrapper}>
+                    <TextInput
+                      placeholder="6 digit code"
+                      placeholderTextColor={colors.placeholder}
+                      value={otp}
+                      onChangeText={(v) => {
+                        setOtp(v);
+                        setErrors({});
+                      }}
+                      keyboardType="number-pad"
+                      underlineColor="transparent"
+                      activeUnderlineColor="transparent"
+                      style={styles.input}
+                      theme={{
+                        colors: {
+                          primary: "transparent",
+                          onSurfaceVariant: colors.placeholder,
+                        },
+                      }}
+                    />
+                  </View>
+                  {errors.otp && (
+                    <Text style={styles.errorText}>{errors.otp}</Text>
+                  )}
+
+                  <TouchableOpacity
+                    style={[styles.submitBtn, loading && { opacity: 0.7 }]}
+                    onPress={handleVerifyOtp}
+                    disabled={loading}
+                    activeOpacity={0.85}
+                  >
+                    <Text style={styles.submitText}>VERIFY OTP</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={() => {
+                      setOtpSent(false);
+                      setOtp("");
+                      setErrors({});
+                    }}
+                    style={styles.linkRow}
+                  >
+                    <Text style={styles.linkText}>Wrong email? </Text>
+                    <Text style={[styles.linkText, styles.linkAccent]}>
+                      Go back
+                    </Text>
+                  </TouchableOpacity>
+                </>
+              )}
             </>
           )}
 
           {step === 2 && (
             <>
               <Text style={styles.hint}>
-                Enter the OTP sent to{" "}
-                <Text style={{ fontWeight: "700" }}>{email}</Text> and your new
-                password.
+                Create a new password for{" "}
+                <Text style={{ fontWeight: "700" }}>{email}</Text>
               </Text>
-
-              <Text style={[styles.fieldLabel, { marginTop: 12 }]}>OTP</Text>
-              <View style={styles.inputWrapper}>
-                <TextInput
-                  placeholder="6 digit code"
-                  placeholderTextColor={colors.placeholder}
-                  value={otp}
-                  onChangeText={(v) => {
-                    setOtp(v);
-                    setErrors({});
-                  }}
-                  keyboardType="number-pad"
-                  underlineColor="transparent"
-                  activeUnderlineColor="transparent"
-                  style={styles.input}
-                  theme={{
-                    colors: {
-                      primary: "transparent",
-                      onSurfaceVariant: colors.placeholder,
-                    },
-                  }}
-                />
-              </View>
-              {errors.otp && <Text style={styles.errorText}>{errors.otp}</Text>}
 
               <Text style={[styles.fieldLabel, { marginTop: 12 }]}>
                 NEW PASSWORD
@@ -222,6 +287,41 @@ const ForgotPasswordScreen = ({ navigation }) => {
                 <Text style={styles.errorText}>{errors.password}</Text>
               )}
 
+              <Text style={[styles.fieldLabel, { marginTop: 12 }]}>
+                CONFIRM PASSWORD
+              </Text>
+              <View style={styles.inputWrapper}>
+                <TextInput
+                  placeholder="re-enter password"
+                  placeholderTextColor={colors.placeholder}
+                  value={confirmPassword}
+                  onChangeText={(v) => {
+                    setConfirmPassword(v);
+                    setErrors({});
+                  }}
+                  secureTextEntry={!showConfirmPassword}
+                  underlineColor="transparent"
+                  activeUnderlineColor="transparent"
+                  style={styles.input}
+                  theme={{
+                    colors: {
+                      primary: "transparent",
+                      onSurfaceVariant: colors.placeholder,
+                    },
+                  }}
+                  right={
+                    <TextInput.Icon
+                      icon={showConfirmPassword ? "eye-off" : "eye"}
+                      onPress={() => setShowConfirmPassword((p) => !p)}
+                      color={colors.placeholder}
+                    />
+                  }
+                />
+              </View>
+              {errors.confirmPassword && (
+                <Text style={styles.errorText}>{errors.confirmPassword}</Text>
+              )}
+
               <TouchableOpacity
                 style={[styles.submitBtn, loading && { opacity: 0.7 }]}
                 onPress={handleReset}
@@ -232,25 +332,14 @@ const ForgotPasswordScreen = ({ navigation }) => {
                   {loading ? "RESETTING…" : "RESET PASSWORD"}
                 </Text>
               </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={() => {
-                  setStep(1);
-                  setOtp("");
-                }}
-                style={styles.linkRow}
-              >
-                <Text style={styles.linkText}>Wrong email? </Text>
-                <Text style={[styles.linkText, styles.linkAccent]}>
-                  Go back
-                </Text>
-              </TouchableOpacity>
             </>
           )}
 
           {step === 3 && (
             <View style={styles.successContainer}>
-              <Text style={styles.successTitle}>Password reset successfully!</Text>
+              <Text style={styles.successTitle}>
+                Password reset successfully!
+              </Text>
               <Text style={styles.successHint}>
                 You can now login with your new password.
               </Text>
@@ -284,7 +373,7 @@ const styles = StyleSheet.create({
   },
   backText: {
     color: "rgba(255,255,255,0.75)",
-    fontSize: 14,
+    fontSize: 30,
     fontWeight: "600",
     letterSpacing: 0.3,
   },
@@ -334,23 +423,18 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 14,
-    backgroundColor: "rgba(74, 104, 128, 0.75)",
     alignItems: "center",
     justifyContent: "center",
   },
-  badgeEmoji: { fontSize: 24 },
-  appLabel: {
-    fontSize: 10,
-    letterSpacing: 2.5,
-    color: "rgba(255,255,255,0.65)",
-    fontWeight: "600",
-    marginBottom: 2,
+  badgeEmoji: {
+    height: 30,
+    width: 30,
   },
   appTitle: {
-    fontSize: 22,
+    fontSize: 25,
     fontWeight: "700",
     color: "#fff",
-    letterSpacing: 0.3,
+    letterSpacing: 0.5,
   },
 
   /* Frosted card */
@@ -380,7 +464,7 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
     color: "rgba(50,65,80,0.65)",
     fontWeight: "700",
-    marginBottom: 6,
+    marginBottom: 9,
     marginTop: 4,
   },
 

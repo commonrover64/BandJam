@@ -279,14 +279,12 @@ const styles = StyleSheet.create({
     color: "rgba(50,65,80,0.65)",
     fontWeight: "700",
     marginBottom: 6,
-    marginTop: 4,
+    marginTop: 12,
   },
   passwordLabelRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: 12,
-    marginBottom: 6,
   },
   forgotText: {
     fontSize: 12,
