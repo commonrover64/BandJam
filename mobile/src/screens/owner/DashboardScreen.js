@@ -155,27 +155,37 @@ const DashboardScreen = () => {
         ) : (
           bookings.slice(0, 5).map((b) => (
             <View key={b.id} style={styles.bookingRow}>
-              <View style={{ flex: 1, marginRight: 12 }}>
+              {/* Top row: room name + status pill */}
+              <View style={styles.bookingTopRow}>
                 <Text style={styles.bookingRoom} numberOfLines={1}>
                   {b.room_name}
                 </Text>
-                {/* consumer info */}
-                <Text style={styles.consumerName}>
-                  Booked by {b.consumer_name} for{" "}
-                  {new Date(b.booking_date).toDateString()}
-                </Text>
-              </View>
-              <View
-                style={[
-                  styles.statusPill,
-                  { backgroundColor: `${statusColor(b.status)}18` },
-                ]}
-              >
-                <Text
-                  style={[styles.statusText, { color: statusColor(b.status) }]}
+                <View
+                  style={[
+                    styles.statusPill,
+                    { backgroundColor: `${statusColor(b.status)}18` },
+                  ]}
                 >
-                  {b.status}
+                  <Text
+                    style={[
+                      styles.statusText,
+                      { color: statusColor(b.status) },
+                    ]}
+                  >
+                    {b.status}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Consumer Detail*/}
+              <View style={styles.consumerBlock}>
+                <Text style={styles.consumerName}>
+                  Booked by · {b.consumer_name}
                 </Text>
+                <Text style={styles.consumerMeta}>
+                  Booked on · {new Date(b.booking_date).toDateString()}
+                </Text>
+                <Text style={styles.consumerMeta}>Phone · {b.phone}</Text>
               </View>
             </View>
           ))
@@ -270,27 +280,43 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
 
+  /* Consumer Detail*/
+  consumerBlock: {
+    marginTop: 6,
+    paddingTop: 6,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255,255,255,0.25)", // subtle separator
+    gap: 3,
+  },
+  consumerName: {
+    fontSize: 11,
+    fontWeight: "600", // down from 700
+  },
+  consumerMeta: {
+    fontSize: 11,
+    fontWeight: "500",
+  },
+
   /* Booking rows */
   bookingRow: {
     backgroundColor: "rgba(255,255,255,0.30)",
     borderRadius: 14,
     padding: 14,
     marginBottom: 8,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.45)",
+  },
+  bookingTopRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.45)",
   },
   bookingRoom: {
     color: colors.textDark,
     fontWeight: "700",
     fontSize: 14,
-    marginBottom: 3,
-  },
-  bookingDate: {
-    color: "rgba(40,55,70,0.55)",
-    fontSize: 12,
+    flex: 1,
+    marginRight: 12,
   },
   statusPill: {
     paddingHorizontal: 10,
