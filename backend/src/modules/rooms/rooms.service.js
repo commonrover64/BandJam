@@ -92,19 +92,16 @@ const updateRoom = async (ownerId, roomId, updates) => {
       const urlsToDelete = imageUrls.filter((_, i) =>
         removedIndices.includes(i),
       );
-      console.log("deleting from cloudinary:", urlsToDelete); // debug
 
       await Promise.all(
         urlsToDelete.map((url) =>
           cloudinary.uploader
             .destroy(getPublicId(url))
-            .then((res) => console.log("cloudinary destroy result:", res))
             .catch((err) => console.log("cloudinary delete failed:", err)),
         ),
       );
 
       imageUrls = imageUrls.filter((_, i) => !removedIndices.includes(i));
-      console.log("remaining images:", imageUrls); // debug
     }
   }
 
