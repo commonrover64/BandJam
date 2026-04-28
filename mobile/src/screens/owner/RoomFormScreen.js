@@ -45,6 +45,7 @@ const RoomFormScreen = () => {
     longitude: 78.9629,
   });
   const [removedExisting, setRemovedExisting] = useState([]);
+  const mapReference = React.useRef(null);
 
   // ── Initialize / Reset when screen gains focus ───────
   useFocusEffect(
@@ -267,7 +268,36 @@ const RoomFormScreen = () => {
     },
   };
 
-  // ── Render ─────────────────────────────────────────────
+  // Get user's current GPS location and set marker there
+  const getCurrentLocation = async () => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") return;
+
+      const loc = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+
+      const coords = {
+        latitude: loc.coords.latitude,
+        longitude: loc.coords.longitude,
+      };
+
+      setLocation(coords); // move marker to user location
+      mapReference.current?.animateToRegion(
+        {
+          ...coords,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        },
+        500,
+      );
+    } catch (err) {
+      console.log("Location error:", err);
+    }
+  };
+
+  // ── Render
   return (
     <View style={{ flex: 1 }}>
       <LinearGradient
@@ -474,7 +504,12 @@ const RoomFormScreen = () => {
                 styles.toggleBtn,
                 addressMode === "map" && styles.toggleActive,
               ]}
-              onPress={() => setAddressMode("map")}
+              onPress={() => {
+                setAddressMode("map");
+                setTimeout(() => {
+                  (getCurrentLocation(), 150);
+                });
+              }}
               activeOpacity={0.8}
             >
               <Text
@@ -521,12 +556,13 @@ const RoomFormScreen = () => {
                   : "Tap on the map to drop a pin"}
               </Text>
               <MapView
+                ref={mapReference}
                 style={styles.map}
                 initialRegion={{
                   latitude: location.latitude,
                   longitude: location.longitude,
-                  latitudeDelta: isEdit ? 0.05 : 5,
-                  longitudeDelta: isEdit ? 0.05 : 5,
+                  latitudeDelta: 0.01,
+                  longitudeDelta: 0.01,
                 }}
                 onPress={handleMapPress}
               >
