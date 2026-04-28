@@ -5,8 +5,7 @@ const transporter = require("../../config/mailer");
 
 // register a new user (owner or consumer)
 const registerUser = async ({ name, email, password, role, phone }) => {
-
-  if(!phone) {
+  if (!phone) {
     throw new Error("Phone number is required");
   }
   // check if email already exists
@@ -53,7 +52,13 @@ const loginUser = async ({ email, password }) => {
 
   return {
     token,
-    user: { id: user.id, name: user.name, email: user.email, role: user.role },
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      phone: user.phone,
+    },
   };
 };
 
