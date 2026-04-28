@@ -169,60 +169,88 @@ const RoomFormScreen = () => {
     }
   };
 
-  const buildFormData = () => {
+  // Cloudinary direct upload
+  const uploadToCloudinary = async (imageAsset) => {
+    // get signature from backend
+    const sigRes = await api.get("/rooms/upload-signature");
+    const { signature, timestamp, folder, api_key, cloud_name } = sigRes.data;
+
     const formData = new FormData();
-    formData.append("name", name);
-    formData.append("description", description);
-    formData.append("address", address);
-    formData.append("phone", phone);
-    formData.append("price_per_day", price);
-    formData.append("lat", location.latitude.toString());
-    formData.append("lng", location.longitude.toString());
-
-    if (isEdit && removedExisting.length > 0) {
-      removedExisting.forEach((idx) => {
-        formData.append("removed_image_indices", idx.toString());
-      });
-    }
-
-    images.forEach((img, index) => {
-      formData.append("images", {
-        uri: img.uri,
-        name: `room_${index + 1}.jpg`,
-        type: "image/jpeg",
-      });
+    formData.append("file", {
+      uri: imageAsset.uri,
+      name: "room.jpg",
+      type: "image/jpeg",
     });
+    formData.append("signature", signature);
+    formData.append("timestamp", timestamp.toString());
+    formData.append("folder", folder);
+    formData.append("api_key", api_key);
+    formData.append("transformation", "w_1200,h_675,c_fill,q_auto");
 
-    return formData;
+    const uploadRes = await fetch(
+      `https://api.cloudinary.com/v1_1/${cloud_name}/image/upload`,
+      { method: "POST", body: formData },
+    );
+    const data = await uploadRes.json();
+    if (!data.secure_url) throw new Error("Cloudinary upload failed");
+    return data.secure_url;
   };
 
+  // create
   const handleCreate = async () => {
     if (!validate()) return;
     try {
       setLoading(true);
-      await api.post("/rooms", buildFormData(), {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      Alert.alert("Success", "Room listed successfully!");
-      resetToAddMode(); // clear params so screen returns to add mode
-    } catch (err) {
-      Alert.alert(
-        "Error",
-        err.response?.data?.message || "Something went wrong",
+
+      // upload new images directly to cloudinary
+      const uploadedUrls = await Promise.all(
+        images.map((img) => uploadToCloudinary(img)),
       );
+
+      await api.post("/rooms", {
+        name,
+        description,
+        address,
+        phone,
+        price_per_day: price,
+        lat: location.latitude,
+        lng: location.longitude,
+        image_urls: JSON.stringify(uploadedUrls),
+      });
+
+      Alert.alert("Success", "Room listed successfully!");
+      resetToAddMode();
+    } catch (err) {
+      Alert.alert("Error", err.response?.data?.message || "Upload failed");
     } finally {
       setLoading(false);
     }
   };
 
+  // save
   const handleSave = async () => {
     if (!validate()) return;
     try {
       setLoading(true);
-      await api.patch(`/rooms/${roomParam.id}`, buildFormData(), {
-        headers: { "Content-Type": "multipart/form-data" },
+
+      // upload only newly picked images
+      const newUrls = await Promise.all(
+        images.map((img) => uploadToCloudinary(img)),
+      );
+
+      await api.patch(`/rooms/${roomParam.id}`, {
+        name,
+        description,
+        address,
+        phone,
+        price_per_day: price,
+        lat: location.latitude,
+        lng: location.longitude,
+        image_urls: JSON.stringify(newUrls),
+        removed_image_indices: JSON.stringify(removedExisting),
       });
-      Alert.alert("Success", "Room updated successfully!", [
+
+      Alert.alert("Success", "Room updated!", [
         {
           text: "OK",
           onPress: () => {
@@ -507,8 +535,22 @@ const RoomFormScreen = () => {
               onPress={() => {
                 setAddressMode("map");
                 setTimeout(() => {
-                  (getCurrentLocation(), 150);
-                });
+                  if (isEdit) {
+                    // center on existing room location
+                    mapReference.current?.animateToRegion(
+                      {
+                        latitude: location.latitude,
+                        longitude: location.longitude,
+                        latitudeDelta: 0.01,
+                        longitudeDelta: 0.01,
+                      },
+                      500,
+                    );
+                  } else {
+                    // center on user GPS in add mode
+                    getCurrentLocation();
+                  }
+                }, 150);
               }}
               activeOpacity={0.8}
             >

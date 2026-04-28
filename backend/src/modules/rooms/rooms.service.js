@@ -1,4 +1,13 @@
 const pool = require("../../config/db");
+const { cloudinary } = require("../../config/upload");
+
+const getPublicId = (url) => {
+  // extract public_id from cloudinary URL
+  // URL format: https://res.cloudinary.com/cloud/image/upload/v123/practice-space/rooms/filename.jpg
+  const parts = url.split("/");
+  const filename = parts[parts.length - 1].split(".")[0];
+  return `practice-space/rooms/${filename}`;
+};
 
 const createRoom = async (
   ownerId,
@@ -67,12 +76,36 @@ const updateRoom = async (ownerId, roomId, updates) => {
   // handle image array update
   let imageUrls = current.image_url || [];
 
-  // remove images at specified indices (send as array of numbers)
   if (updates.removed_image_indices) {
-    const removedIndices = Array.isArray(updates.removed_image_indices)
-      ? updates.removed_image_indices.map(Number)
-      : [Number(updates.removed_image_indices)];
-    imageUrls = imageUrls.filter((_, i) => !removedIndices.includes(i));
+    // parse the JSON string sent from mobile
+    let removedIndices;
+    try {
+      removedIndices = JSON.parse(updates.removed_image_indices).map(Number);
+    } catch {
+      removedIndices = Array.isArray(updates.removed_image_indices)
+        ? updates.removed_image_indices.map(Number)
+        : [Number(updates.removed_image_indices)];
+    }
+
+    // only proceed if there are actually indices to remove
+    if (removedIndices.length > 0) {
+      const urlsToDelete = imageUrls.filter((_, i) =>
+        removedIndices.includes(i),
+      );
+      console.log("deleting from cloudinary:", urlsToDelete); // debug
+
+      await Promise.all(
+        urlsToDelete.map((url) =>
+          cloudinary.uploader
+            .destroy(getPublicId(url))
+            .then((res) => console.log("cloudinary destroy result:", res))
+            .catch((err) => console.log("cloudinary delete failed:", err)),
+        ),
+      );
+
+      imageUrls = imageUrls.filter((_, i) => !removedIndices.includes(i));
+      console.log("remaining images:", imageUrls); // debug
+    }
   }
 
   // append new images
@@ -112,6 +145,21 @@ const updateRoom = async (ownerId, roomId, updates) => {
 };
 
 const deleteRoom = async (ownerId, roomId) => {
+  const { rows: existing } = await pool.query(
+    "SELECT image_url FROM rooms WHERE id = $1 AND owner_id = $2",
+    [roomId, ownerId],
+  );
+  if (!existing[0]) throw new Error("Room not found or unauthorized");
+
+  // delete all room images from cloudinary
+  await Promise.all(
+    (existing[0].image_url || []).map((url) =>
+      cloudinary.uploader
+        .destroy(getPublicId(url))
+        .catch((err) => console.log("Cloudinary delete failed:", err)),
+    ),
+  );
+
   const { rows } = await pool.query(
     "DELETE FROM rooms WHERE id = $1 AND owner_id = $2 RETURNING id",
     [roomId, ownerId],
@@ -211,4 +259,5 @@ module.exports = {
   getOwnerRooms,
   searchRooms,
   toggleRoomActive,
+  getPublicId,
 };

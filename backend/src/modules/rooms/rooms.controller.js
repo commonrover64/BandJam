@@ -7,21 +7,16 @@ const {
   searchRooms,
   toggleRoomActive,
 } = require("./rooms.service");
+const { cloudinary } = require("../../config/upload");
 
 const create = async (req, res) => {
   try {
-    const baseUrl = `${req.protocol}://${req.get("host")}/uploads/`;
+    // image_urls is now a JSON array of cloudinary URLs sent by client
+    const image_url = req.body.image_urls
+      ? JSON.parse(req.body.image_urls)
+      : [];
 
-    // multer with array handles multiple files
-    const files = req.files || [];
-    const image_urls = files.map((file) => baseUrl + file.filename);
-    // console.log("payload ", req.body);
-    // console.log("image_urls ", image_urls);
-
-    const room = await createRoom(req.user.id, {
-      ...req.body,
-      image_url: image_urls,
-    });
+    const room = await createRoom(req.user.id, { ...req.body, image_url });
     res.status(201).json({ success: true, room });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
@@ -39,9 +34,9 @@ const getOne = async (req, res) => {
 
 const update = async (req, res) => {
   try {
-    const baseUrl = `${req.protocol}://${req.get("host")}/uploads/`;
-    const files = req.files || [];
-    const newImageUrls = files.map((f) => baseUrl + f.filename);
+    const newImageUrls = req.body.image_urls
+      ? JSON.parse(req.body.image_urls)
+      : [];
 
     const room = await updateRoom(req.user.id, req.params.id, {
       ...req.body,
@@ -106,6 +101,32 @@ const toggleActive = async (req, res) => {
   }
 };
 
+const getUploadSignature = (req, res) => {
+  try {
+    const timestamp = Math.round(Date.now() / 1000);
+    const folder = "practice-space/rooms";
+    const transformation = "w_1200,h_675,c_fill,q_auto";
+
+    // signature is generated server side — client never sees the API secret
+    const signature = cloudinary.utils.api_sign_request(
+      { timestamp, folder, transformation },
+      process.env.CLOUDINARY_API_SECRET,
+    );
+
+    res.status(200).json({
+      success: true,
+      signature,
+      timestamp,
+      folder,
+      transformation,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 module.exports = {
   create,
   getOne,
@@ -114,4 +135,5 @@ module.exports = {
   myRooms,
   search,
   toggleActive,
+  getUploadSignature,
 };
