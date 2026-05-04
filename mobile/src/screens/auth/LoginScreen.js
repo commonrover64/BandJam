@@ -8,6 +8,7 @@ import {
   ScrollView,
   Platform,
   StatusBar,
+  Image,
 } from "react-native";
 import { Text, TextInput, Button } from "react-native-paper";
 import { LinearGradient } from "expo-linear-gradient";
@@ -76,10 +77,14 @@ const LoginScreen = ({ navigation }) => {
         {/* App badge */}
         <View style={styles.badgeRow}>
           <View style={styles.iconBadge}>
-            <Text style={styles.badgeEmoji}>Logo Here</Text>
+            <Image
+              source={require("../../assets/logo.png")}
+              style={styles.badgeIcon}
+              resizeMode="contain"
+            />
           </View>
           <View>
-            <Text style={styles.appLabel}>MY APP</Text>
+            <Text style={styles.appLabel}>Band Jam</Text>
             <Text style={styles.appTitle}>Welcome back</Text>
           </View>
         </View>
@@ -241,10 +246,14 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(74, 104, 128, 0.75)",
     alignItems: "center",
     justifyContent: "center",
+    overflow: "hidden",
   },
-  badgeEmoji: { fontSize: 24 },
+  badgeIcon: {
+    width: 60,
+    height: 60,
+  },
   appLabel: {
-    fontSize: 10,
+    fontSize: 20,
     letterSpacing: 2.5,
     color: "rgba(255,255,255,0.65)",
     fontWeight: "600",

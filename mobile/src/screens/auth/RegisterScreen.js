@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   StatusBar,
+  Image,
 } from "react-native";
 import { Text, TextInput } from "react-native-paper";
 import { LinearGradient } from "expo-linear-gradient";
@@ -95,10 +96,14 @@ const RegisterScreen = ({ navigation }) => {
         {/* App badge */}
         <View style={styles.badgeRow}>
           <View style={styles.iconBadge}>
-            <Text style={styles.badgeEmoji}>🎵</Text>
+            <Image
+              source={require("../../assets/logo.png")}
+              style={styles.badgeIcon}
+              resizeMode="contain"
+            />
           </View>
           <View>
-            <Text style={styles.appLabel}>MY APP</Text>
+            <Text style={styles.appLabel}>Band Jam</Text>
             <Text style={styles.appTitle}>Create account</Text>
           </View>
         </View>
@@ -186,27 +191,27 @@ const RegisterScreen = ({ navigation }) => {
           {/* phone  */}
           <Text style={[styles.fieldLabel, { marginTop: 16 }]}>PHONE</Text>
           <View style={styles.inputWrapper}>
-          <TextInput
-            placeholder="Phone number"
-            placeholderTextColor={colors.placeholder}
-            value={phone}
-            onChangeText={(v) => {
-              setPhone(v);
-              setErrors((e) => ({ ...e, phone: null }));
-            }}
-            keyboardType="phone-pad"
-            underlineColor="transparent"
-            activeUnderlineColor="transparent"
-            style={styles.input}
-            theme={{
-              colors: {
-                primary: "transparent",
-                onSurfaceVariant: colors.placeholder,
-                error: colors.error,
-              },
-            }}
-            error={!!errors.phone}
-          />
+            <TextInput
+              placeholder="Phone number"
+              placeholderTextColor={colors.placeholder}
+              value={phone}
+              onChangeText={(v) => {
+                setPhone(v);
+                setErrors((e) => ({ ...e, phone: null }));
+              }}
+              keyboardType="phone-pad"
+              underlineColor="transparent"
+              activeUnderlineColor="transparent"
+              style={styles.input}
+              theme={{
+                colors: {
+                  primary: "transparent",
+                  onSurfaceVariant: colors.placeholder,
+                  error: colors.error,
+                },
+              }}
+              error={!!errors.phone}
+            />
           </View>
           {errors.phone && <Text style={styles.errorText}>{errors.phone}</Text>}
 
@@ -322,10 +327,14 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(74, 104, 128, 0.75)",
     alignItems: "center",
     justifyContent: "center",
+    overflow: "hidden",
   },
-  badgeEmoji: { fontSize: 24 },
+  badgeIcon: {
+    width: 60,
+    height: 60,
+  },
   appLabel: {
-    fontSize: 10,
+    fontSize: 20,
     letterSpacing: 2.5,
     color: "rgba(255,255,255,0.65)",
     fontWeight: "600",
