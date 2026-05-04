@@ -4,6 +4,8 @@ const {
   getConsumerBookings,
   getOwnerBookings,
   cancelBooking,
+  approveBooking,
+  declineBooking,
 } = require("./bookings.service");
 
 const create = async (req, res) => {
@@ -60,6 +62,24 @@ const recentRooms = async (req, res) => {
   }
 };
 
+const approve = async (req, res) => {
+  try {
+    const result = await approveBooking(req.user.id, req.params.id);
+    res.status(200).json({ success: true, ...result });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+const decline = async (req, res) => {
+  try {
+    const result = await declineBooking(req.user.id, req.params.id);
+    res.status(200).json({ success: true, ...result });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
 module.exports = {
   create,
   getOne,
@@ -67,4 +87,6 @@ module.exports = {
   ownerBookings,
   cancel,
   recentRooms,
+  approve,
+  decline
 };

@@ -1,5 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import * as SecureStore from "expo-secure-store";
+import * as Notifications from "expo-notifications";
+import * as Device from "expo-device";
+import Constants from "expo-constants";
 import api from "../services/api";
 
 const AuthContext = createContext();
@@ -19,6 +22,7 @@ export const AuthProvider = ({ children }) => {
         try {
           const res = await api.get("/auth/me");
           setUser(res.data.user);
+          await registerPushToken();
         } catch {
           // token expired or invalid, clear it
           await SecureStore.deleteItemAsync("token");
@@ -29,12 +33,34 @@ export const AuthProvider = ({ children }) => {
     loadToken();
   }, []);
 
+  const registerPushToken = async () => {
+    if (!Device.isDevice) return; // push notifications only work on real devices
+
+    const { status } = await Notifications.requestPermissionsAsync();
+    if (status !== "granted") return;
+
+    const projectId =
+      Constants.expoConfig?.extra?.eas?.projectId ??
+      Constants.easConfig?.projectId;
+
+    const pushToken = (await Notifications.getExpoPushTokenAsync({ projectId }))
+      .data;
+
+    // save to backend
+    try {
+      await api.patch("/auth/push-token", { push_token: pushToken });
+    } catch {
+      // silently fail
+    }
+  };
+
   const login = async (email, password) => {
     const res = await api.post("/auth/login", { email, password });
     const { token, user } = res.data;
     await SecureStore.setItemAsync("token", token);
     setToken(token);
     setUser(user);
+    await registerPushToken(); // register after login 
     return user; // return user so navigator knows which role to redirect to
   };
 
@@ -44,7 +70,7 @@ export const AuthProvider = ({ children }) => {
       email,
       password,
       role,
-      phone
+      phone,
     });
     return res.data;
   };

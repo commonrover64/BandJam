@@ -1,5 +1,11 @@
 import React, { useState } from "react";
-import { View, StyleSheet, Alert, Platform, TouchableOpacity } from "react-native";
+import {
+  View,
+  StyleSheet,
+  Alert,
+  Platform,
+  TouchableOpacity,
+} from "react-native";
 import { Text } from "react-native-paper";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { LinearGradient } from "expo-linear-gradient";
@@ -16,17 +22,16 @@ const BookingScreen = ({ route, navigation }) => {
     try {
       setLoading(true);
       const bookingDate = date.toISOString().split("T")[0];
-      const bookingRes = await api.post("/bookings", {
+
+      // just create booking — no payment API call needed
+      await api.post("/bookings", {
         room_id: room.id,
         booking_date: bookingDate,
       });
-      await api.post("/payments", {
-        booking_id: bookingRes.data.booking.id,
-        payment_method: "upi",
-      });
+
       Alert.alert(
-        "Booking Confirmed!",
-        `You've booked ${room.name} on ${bookingDate}`,
+        "Request Sent",
+        `Your booking request for ${room.name} on ${bookingDate} has been sent to the owner. You will be notified once approved.`,
         [{ text: "OK", onPress: () => navigation.goBack() }],
       );
     } catch (err) {
@@ -115,7 +120,7 @@ const BookingScreen = ({ route, navigation }) => {
           activeOpacity={0.85}
         >
           <Text style={styles.confirmText}>
-            {loading ? "PROCESSING…" : "CONFIRM & PAY"}
+            {loading ? "Sending Request" : "Request Booking"}
           </Text>
         </TouchableOpacity>
       </View>

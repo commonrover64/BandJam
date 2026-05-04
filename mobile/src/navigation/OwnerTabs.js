@@ -8,6 +8,7 @@ import MyRoomsScreen from "../screens/owner/MyRoomsScreen";
 import RoomFormScreen from "../screens/owner/RoomFormScreen";
 import OnboardingScreen from "../screens/owner/OnboardingScreen";
 import ProfileScreen from "../screens/shared/ProfileScreen";
+import BookingRequestsScreen from "../screens/owner/BookingRequestScreen";
 import { colors } from "../theme/colors";
 
 const Tab = createBottomTabNavigator();
@@ -38,7 +39,11 @@ const OwnerTabs = () => (
       component={DashboardStack}
       options={{
         tabBarIcon: ({ color }) => (
-          <MaterialCommunityIcons name="view-dashboard" size={24} color={color} />
+          <MaterialCommunityIcons
+            name="view-dashboard"
+            size={24}
+            color={color}
+          />
         ),
       }}
     />
@@ -68,7 +73,21 @@ const OwnerTabs = () => (
       component={OnboardingScreen}
       options={{
         tabBarIcon: ({ color }) => (
-          <MaterialCommunityIcons name="account-check" size={24} color={color} />
+          <MaterialCommunityIcons
+            name="account-check"
+            size={24}
+            color={color}
+          />
+        ),
+      }}
+    />
+
+    <Tab.Screen
+      name="Requests"
+      component={BookingRequestsScreen}
+      options={{
+        tabBarIcon: ({ color }) => (
+          <MaterialCommunityIcons name="bell" size={24} color={color} />
         ),
       }}
     />

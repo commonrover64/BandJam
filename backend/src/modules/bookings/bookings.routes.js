@@ -7,6 +7,8 @@ const {
   ownerBookings,
   cancel,
   recentRooms,
+  approve,
+  decline
 } = require("./bookings.controller");
 const authenticate = require("../../middleware/authenticate");
 const requireRole = require("../../middleware/requireRole");
@@ -22,5 +24,8 @@ router.get(
   requireRole("consumer"),
   recentRooms,
 );
+
+router.patch("/:id/approve", authenticate, requireRole("owner"), approve);
+router.patch("/:id/decline", authenticate, requireRole("owner"), decline);
 
 module.exports = router;

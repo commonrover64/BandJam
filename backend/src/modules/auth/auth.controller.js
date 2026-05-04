@@ -1,3 +1,4 @@
+const pool = require("../../config/db");
 const {
   registerUser,
   loginUser,
@@ -84,6 +85,18 @@ const resetPasswordHandler = async (req, res) => {
   }
 };
 
+const savePushToken = async (req, res) => {
+  try {
+    await pool.query("UPDATE users SET push_token = $1 WHERE id = $2", [
+      req.body.push_token,
+      req.user.id,
+    ]);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -92,5 +105,6 @@ module.exports = {
   editInstruments,
   editPhone,
   forgotPasswordHandler,
-  resetPasswordHandler
+  resetPasswordHandler,
+  savePushToken
 };
