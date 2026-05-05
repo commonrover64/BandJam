@@ -1,13 +1,11 @@
 import React from "react";
-import {
-  NavigationContainer,
-  createNavigationContainerRef,
-} from "@react-navigation/native";
+import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { useAuth } from "../context/AuthContext";
 import { ActivityIndicator, View } from "react-native";
 import * as Notifications from "expo-notifications";
 import { useEffect, useRef } from "react";
+import { useNavigation } from "@react-navigation/native";
 
 import LoginScreen from "../screens/auth/LoginScreen";
 import RegisterScreen from "../screens/auth/RegisterScreen";
@@ -16,7 +14,6 @@ import ConsumerTabs from "./ConsumerTabs";
 import ForgotPasswordScreen from "../screens/auth/ForgotPasswordScreen";
 
 const Stack = createStackNavigator();
-const navigationRef = createNavigationContainerRef();
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -28,6 +25,7 @@ Notifications.setNotificationHandler({
 
 const AppNavigator = () => {
   const { user, loading } = useAuth();
+  const navigationRef = useRef();
   const responseListener = useRef();
 
   useEffect(() => {
@@ -36,11 +34,9 @@ const AppNavigator = () => {
       Notifications.addNotificationResponseReceivedListener((response) => {
         const data = response.notification.request.content.data;
 
-        if (!navigationRef.isReady() || !data?.type) return;
-
         if (data.type === "booking_request") {
           // owner tapped notification — go to booking requests
-          navigationRef.navigate("OwnerTabs", {
+          navigationRef.current?.navigate("OwnerTabs", {
             screen: "Dashboard",
           });
         } else if (
@@ -48,14 +44,14 @@ const AppNavigator = () => {
           data.type === "booking_declined"
         ) {
           // consumer tapped notification — go to my bookings
-          navigationRef.navigate("ConsumerTabs", {
+          navigationRef.current?.navigate("ConsumerTabs", {
             screen: "My Bookings",
           });
         }
       });
 
     return () => {
-      responseListener.current?.remove();
+      Notifications.removeNotificationSubscription(responseListener.current);
     };
   }, []);
 
