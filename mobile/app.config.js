@@ -45,7 +45,7 @@ export default {
     ],
     extra: {
       eas: {
-        projectId: process.env.EAS_PROJECT_ID,
+        projectId: "81885d94-5958-492b-840c-162627a70e8b",
       },
     },
     owner: "commonrover",
