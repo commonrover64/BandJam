@@ -25,3 +25,6 @@ The app is fully functional for the core booking flow on Android. iOS support is
 
 ## Download (Android)
 https://expo.dev/accounts/commonrover/projects/mobile/builds/e5b2b571-53be-4f5f-ad94-b0153f05dafd
+
+## Credits
+App Logo and color palatte by my brother [@SunnyTamang](https://github.com/SunnyTamang)
