@@ -23,6 +23,7 @@ export default {
         foregroundImage: "./src/assets/logo.png",
         backgroundColor: "#ffffff",
       },
+      googleServicesFile:"./google-services.json",
       config: {
         googleMaps: {
           apiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_KEY,

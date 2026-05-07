@@ -4,6 +4,7 @@ import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 import Constants from "expo-constants";
 import api from "../services/api";
+import { Platform } from "react-native";
 
 const AuthContext = createContext();
 
@@ -11,6 +12,41 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const registerPushToken = async () => {
+    const projectId = "81885d94-5958-492b-840c-162627a70e8b";
+
+    if (!Device.isDevice) {
+      console.log("Skipping push token — not a real device");
+      return;
+    }
+
+    const { status } = await Notifications.requestPermissionsAsync();
+    if (status !== "granted") {
+      console.log("Notification permission denied");
+      return;
+    }
+
+    // Android notification channel
+    if (Platform.OS === "android") {
+      await Notifications.setNotificationChannelAsync("default", {
+        name: "default",
+        importance: Notifications.AndroidImportance.MAX,
+      });
+    }
+
+    try {
+      const pushToken = (
+        await Notifications.getExpoPushTokenAsync({
+          projectId: projectId,
+        })
+      ).data;
+
+      await api.patch("/auth/push-token", { push_token: pushToken });
+    } catch (err) {
+      throw err;
+    }
+  };
 
   // on app start, check if token exists in secure store
   useEffect(() => {
@@ -33,34 +69,17 @@ export const AuthProvider = ({ children }) => {
     loadToken();
   }, []);
 
-  const registerPushToken = async () => {
-    if (!Device.isDevice) return; // push notifications only work on real devices
-
-    const { status } = await Notifications.requestPermissionsAsync();
-    if (status !== "granted") return;
-
-    const projectId =
-      Constants.expoConfig?.extra?.eas?.projectId ??
-      Constants.easConfig?.projectId;
-
-    const pushToken = (await Notifications.getExpoPushTokenAsync({ projectId }))
-      .data;
-
-    // save to backend
-    try {
-      await api.patch("/auth/push-token", { push_token: pushToken });
-    } catch {
-      // silently fail
-    }
-  };
-
   const login = async (email, password) => {
     const res = await api.post("/auth/login", { email, password });
     const { token, user } = res.data;
     await SecureStore.setItemAsync("token", token);
     setToken(token);
     setUser(user);
-    await registerPushToken(); // register after login 
+    try {
+      await registerPushToken(); // register after login
+    } catch (error) {
+      console.error("push token failed: ", error.message);
+    }
     return user; // return user so navigator knows which role to redirect to
   };
 
@@ -88,7 +107,16 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, token, loading, login, register, logout, refreshUser, registerPushToken }}
+      value={{
+        user,
+        token,
+        loading,
+        login,
+        register,
+        logout,
+        refreshUser,
+        registerPushToken,
+      }}
     >
       {children}
     </AuthContext.Provider>
