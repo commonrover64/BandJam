@@ -6,6 +6,7 @@ const {
   cancelBooking,
   approveBooking,
   declineBooking,
+  getRecentlyBookedRooms,
 } = require("./bookings.service");
 
 const create = async (req, res) => {
