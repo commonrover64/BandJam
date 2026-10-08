@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   View,
   ScrollView,
@@ -15,7 +15,7 @@ import BookingCard from "../../components/BookingCard";
 import PaginationBar from "../../components/PaginationBar";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import { colors } from "../../theme/colors";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 
 const PAGE_SIZE = 10;
 const FILTERS = ["All", "This Month", "Last Month", "Confirmed", "Cancelled"];
@@ -32,7 +32,7 @@ const MyBookingsScreen = () => {
   const fetchBookings = async () => {
     try {
       const res = await api.get("/bookings/consumer/me");
-      setBookings(res.data.bookings);
+      setBookings(res.data?.bookings ?? []);
     } catch {
       Alert.alert("Error", "Could not fetch bookings");
     } finally {
@@ -40,9 +40,12 @@ const MyBookingsScreen = () => {
     }
   };
 
-  useEffect(() => {
-    fetchBookings();
-  }, []);
+  // was useEffect([]) — new bookings / owner approvals never showed until restart
+  useFocusEffect(
+    useCallback(() => {
+      fetchBookings();
+    }, []),
+  );
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -77,13 +80,13 @@ const MyBookingsScreen = () => {
 
   const openDirections = (room) => {
     const url = `https://www.google.com/maps/dir/?api=1&destination=${room.lat},${room.lng}&travelmode=driving`;
-    Linking.openURL(url);
+    Linking.openURL(url).catch(() => Alert.alert("Error", "Could not open Maps"));
   };
 
   const now = new Date();
   const filtered = bookings.filter((b) => {
     const date = new Date(b.booking_date);
-    if (search && !b.room_name.toLowerCase().includes(search.toLowerCase()))
+    if (search && !(b.room_name ?? "").toLowerCase().includes(search.toLowerCase()))
       return false;
     if (filter === "This Month")
       return (

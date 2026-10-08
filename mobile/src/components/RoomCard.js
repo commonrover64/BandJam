@@ -9,11 +9,13 @@ import {
 import { Text } from "react-native-paper";
 import { LinearGradient } from "expo-linear-gradient";
 import { colors } from "../theme/colors";
+import { coverImage } from "../utils/image";
 
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = (width - 48 - 12) / 2;
 
 const RoomCard = ({ room, onPress }) => {
+  const cover = coverImage(room.image_url);
   return (
     <TouchableOpacity
       style={styles.card}
@@ -21,8 +23,8 @@ const RoomCard = ({ room, onPress }) => {
       activeOpacity={0.88}
     >
       {/* Image or gradient fallback */}
-      {room.image_url ? (
-        <Image source={{ uri: room.image_url[0] }} style={styles.image} />
+      {cover ? (
+        <Image source={{ uri: cover }} style={styles.image} />
       ) : (
         <LinearGradient
           colors={[colors.gradientStart, colors.gradientMid]}
@@ -49,7 +51,7 @@ const RoomCard = ({ room, onPress }) => {
         <Text style={styles.address} numberOfLines={1}>
           {room.address}
         </Text>
-        {room.distance_km && (
+        {room.distance_km != null && (
           <Text style={styles.distance}>{room.distance_km} km away</Text>
         )}
       </View>

@@ -1,65 +1,90 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import {
   NavigationContainer,
   createNavigationContainerRef,
 } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
-import { useAuth } from "../context/AuthContext";
 import { ActivityIndicator, View } from "react-native";
 import * as Notifications from "expo-notifications";
-import { useEffect, useRef } from "react";
+import { useAuth } from "../context/AuthContext";
 
 import LoginScreen from "../screens/auth/LoginScreen";
 import RegisterScreen from "../screens/auth/RegisterScreen";
+import ForgotPasswordScreen from "../screens/auth/ForgotPasswordScreen";
 import OwnerTabs from "./OwnerTabs";
 import ConsumerTabs from "./ConsumerTabs";
-import ForgotPasswordScreen from "../screens/auth/ForgotPasswordScreen";
 
 const Stack = createStackNavigator();
 const navigationRef = createNavigationContainerRef();
 
+// `shouldShowAlert` is deprecated in expo-notifications 0.32 (SDK 54)
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
   }),
 });
 
+const routeForNotification = (data, role) => {
+  if (!data?.type) return null;
+  if (data.type === "booking_request" && role === "owner") {
+    // owner should land on the pending requests, not the dashboard
+    return ["OwnerTabs", { screen: "Requests" }];
+  }
+  if (
+    (data.type === "booking_approved" || data.type === "booking_declined") &&
+    role !== "owner"
+  ) {
+    return ["ConsumerTabs", { screen: "My Bookings" }];
+  }
+  return null;
+};
+
 const AppNavigator = () => {
   const { user, loading } = useAuth();
-  const responseListener = useRef();
+  const pendingResponse = useRef(null);
+  const roleRef = useRef(user?.role);
+  roleRef.current = user?.role;
+
+  const handleResponse = (response) => {
+    const data = response?.notification?.request?.content?.data;
+    const target = routeForNotification(data, roleRef.current);
+    if (!target) return;
+    if (navigationRef.isReady() && roleRef.current) {
+      navigationRef.navigate(...target);
+    } else {
+      // app is still loading / user not restored yet — try again when ready
+      pendingResponse.current = response;
+    }
+  };
+
+  const flushPending = () => {
+    if (pendingResponse.current && navigationRef.isReady() && roleRef.current) {
+      const r = pendingResponse.current;
+      pendingResponse.current = null;
+      handleResponse(r);
+    }
+  };
 
   useEffect(() => {
-    // handle notification tap
-    responseListener.current =
-      Notifications.addNotificationResponseReceivedListener((response) => {
-        const data = response.notification.request.content.data;
+    // taps while the app is running / in background
+    const sub = Notifications.addNotificationResponseReceivedListener(handleResponse);
 
-        if (!navigationRef.isReady() || !data?.type) return;
+    // tap that cold-started the app (the listener above misses this one)
+    Notifications.getLastNotificationResponseAsync()
+      .then((r) => r && handleResponse(r))
+      .catch(() => {});
 
-        if (data.type === "booking_request") {
-          // owner tapped notification — go to booking requests
-          navigationRef.navigate("OwnerTabs", {
-            screen: "Dashboard",
-          });
-        } else if (
-          data.type === "booking_approved" ||
-          data.type === "booking_declined"
-        ) {
-          // consumer tapped notification — go to my bookings
-          navigationRef.navigate("ConsumerTabs", {
-            screen: "My Bookings",
-          });
-        }
-      });
-
-    return () => {
-      responseListener.current?.remove();
-    };
+    return () => sub.remove();
   }, []);
 
-  // still checking stored token — show spinner
+  // user restored after a cold start → handle any queued tap
+  useEffect(() => {
+    flushPending();
+  }, [user]);
+
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -69,23 +94,17 @@ const AppNavigator = () => {
   }
 
   return (
-    <NavigationContainer ref={navigationRef}>
+    <NavigationContainer ref={navigationRef} onReady={flushPending}>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {!user ? (
-          // not logged in — show auth screens
           <>
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="Register" component={RegisterScreen} />
-            <Stack.Screen
-              name="ForgotPassword"
-              component={ForgotPasswordScreen}
-            />
+            <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
           </>
         ) : user.role === "owner" ? (
-          // logged in as owner
           <Stack.Screen name="OwnerTabs" component={OwnerTabs} />
         ) : (
-          // logged in as consumer
           <Stack.Screen name="ConsumerTabs" component={ConsumerTabs} />
         )}
       </Stack.Navigator>

@@ -6,29 +6,50 @@ import * as Location from "expo-location";
 import { LinearGradient } from "expo-linear-gradient";
 import api from "../../services/api";
 import { colors } from "../../theme/colors";
+import { isValidCoord } from "../../utils/image";
 
 const MapExploreScreen = ({ navigation }) => {
   const [rooms, setRooms] = useState([]);
   const [location, setLocation] = useState(null);
   const [mapRegion, setMapRegion] = useState(null);
 
+  const [error, setError] = useState(null);
+
   useEffect(() => {
+    let cancelled = false;
     const init = async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") return;
-      const loc = await Location.getCurrentPositionAsync({});
-      const coords = {
-        latitude: loc.coords.latitude,
-        longitude: loc.coords.longitude,
-      };
-      setLocation(coords);
-      setMapRegion({ ...coords, latitudeDelta: 0.5, longitudeDelta: 0.5 });
-      const res = await api.get("/rooms/search", {
-        params: { lat: coords.latitude, lng: coords.longitude, radius: 50 },
-      });
-      setRooms(res.data.rooms);
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== "granted") {
+          setError("Location permission is needed to show rooms near you.");
+          return;
+        }
+        const loc =
+          (await Location.getLastKnownPositionAsync()) ??
+          (await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Balanced,
+          }));
+        if (cancelled || !loc) return;
+        const coords = {
+          latitude: loc.coords.latitude,
+          longitude: loc.coords.longitude,
+        };
+        setLocation(coords);
+        setMapRegion({ ...coords, latitudeDelta: 0.5, longitudeDelta: 0.5 });
+        const res = await api.get("/rooms/search", {
+          params: { lat: coords.latitude, lng: coords.longitude, radius: 50 },
+        });
+        if (cancelled) return;
+        // a NaN coordinate crashes the native map on Android
+        setRooms((res.data?.rooms ?? []).filter((r) => isValidCoord(r.lat, r.lng)));
+      } catch {
+        if (!cancelled) setError("Couldn't load the map. Check location services and your connection.");
+      }
     };
     init();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (
@@ -43,9 +64,15 @@ const MapExploreScreen = ({ navigation }) => {
         <Text style={styles.subtitle}>{rooms.length} rooms in this area</Text>
       </View>
 
+      {error && !mapRegion && (
+        <View style={styles.errorBox}>
+          <Text style={styles.subtitle}>{error}</Text>
+        </View>
+      )}
+
       {/* Full-screen map */}
       {mapRegion && (
-        <MapView style={styles.map} region={mapRegion}>
+        <MapView style={styles.map} initialRegion={mapRegion}>
           {/* User location marker */}
           {location && (
             <Marker coordinate={location} pinColor={colors.primary}>
@@ -118,6 +145,7 @@ const styles = StyleSheet.create({
   },
 
   map: { flex: 1 },
+  errorBox: { flex: 1, justifyContent: "center", alignItems: "center", padding: 32 },
 
   /* Callout card */
   callout: {

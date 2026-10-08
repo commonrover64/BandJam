@@ -26,7 +26,7 @@ const BookingRequestsScreen = () => {
     try {
       const res = await api.get("/bookings/owner/me");
       // only show pending bookings
-      setRequests(res.data.bookings.filter((b) => b.status === "pending"));
+      setRequests((res.data?.bookings ?? []).filter((b) => b.status === "pending"));
     } catch {
       Alert.alert("Error", "Could not fetch requests");
     } finally {

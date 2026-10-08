@@ -56,10 +56,17 @@ const RoomFormScreen = () => {
         setAddress(roomParam.address || "");
         setPhone(roomParam.phone || "");
         setPrice(roomParam.price_per_day?.toString() || "");
-        setLocation({
+        const editCoords = {
           latitude: roomParam.lat ? parseFloat(roomParam.lat) : 20.5937,
           longitude: roomParam.lng ? parseFloat(roomParam.lng) : 78.9629,
-        });
+        };
+        setLocation(editCoords);
+        // initialRegion is only read on mount, and this tab stays mounted,
+        // so without this the map stays on India while the pin is elsewhere
+        mapReference.current?.animateToRegion(
+          { ...editCoords, latitudeDelta: 0.01, longitudeDelta: 0.01 },
+          300,
+        );
         setImages([]);
         setRemovedExisting([]);
         setErrors({});
@@ -122,7 +129,8 @@ const RoomFormScreen = () => {
       aspect: [16, 9],
       quality: 0.8,
     });
-    if (!result.canceled) setImages((prev) => [...prev, result.assets[0]]);
+    if (!result.canceled && result.assets?.[0])
+      setImages((prev) => [...prev, result.assets[0]]);
   };
 
   const takePhoto = async () => {
@@ -140,7 +148,8 @@ const RoomFormScreen = () => {
       aspect: [16, 9],
       quality: 0.8,
     });
-    if (!result.canceled) setImages((prev) => [...prev, result.assets[0]]);
+    if (!result.canceled && result.assets?.[0])
+      setImages((prev) => [...prev, result.assets[0]]);
   };
 
   const removeImage = (index) => {
@@ -187,6 +196,7 @@ const RoomFormScreen = () => {
     formData.append("api_key", api_key);
     formData.append("transformation", "w_1200,h_675,c_fill,q_auto");
 
+    if (!signature || !cloud_name) throw new Error("Upload signature missing");
     const uploadRes = await fetch(
       `https://api.cloudinary.com/v1_1/${cloud_name}/image/upload`,
       { method: "POST", body: formData },

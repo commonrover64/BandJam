@@ -38,14 +38,14 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   btn: {
-    backgroundColor: colors.surface0,
+    backgroundColor: colors.glassStrong,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
   },
   disabled: { opacity: 0.3 },
-  btnText: { color: colors.lavender, fontWeight: "bold" },
-  pageText: { color: colors.subtext },
+  btnText: { color: colors.primary, fontWeight: "bold" },
+  pageText: { color: colors.textDark },
 });
 
 export default PaginationBar;

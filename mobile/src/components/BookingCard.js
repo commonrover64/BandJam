@@ -4,6 +4,7 @@ import { Text } from "react-native-paper";
 import MapView, { Marker } from "react-native-maps";
 import { useNavigation } from "@react-navigation/native";
 import { colors } from "../theme/colors";
+import { isValidCoord } from "../utils/image";
 
 const isExpired = (bookingDate) =>
   new Date(bookingDate) < new Date(new Date().toDateString());
@@ -25,7 +26,7 @@ const statusColor = (status, bookingDate) => {
 const BookingCard = ({ booking, onCancel, onDirections, onRebook }) => {
   const [showMap, setShowMap] = useState(false);
   const navigation = useNavigation();
-  const hasLocation = booking.lat && booking.lng;
+  const hasLocation = isValidCoord(booking.lat, booking.lng);
   const { bg, text: statusText } = statusColor(booking.status, booking.booking_date);
 
   return (

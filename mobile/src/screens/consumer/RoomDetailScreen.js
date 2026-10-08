@@ -6,43 +6,49 @@ import {
   Alert,
   TouchableOpacity,
   Image,
-  Dimensions,
+  useWindowDimensions,
   FlatList,
 } from "react-native";
 import { Text, ActivityIndicator } from "react-native-paper";
 import MapView, { Marker } from "react-native-maps";
 import { Linking } from "react-native";
-import * as Location from "expo-location";
 import { LinearGradient } from "expo-linear-gradient";
 import api from "../../services/api";
 import { colors } from "../../theme/colors";
+import { isValidCoord } from "../../utils/image";
 
-const { width } = Dimensions.get("window");
 
 const RoomDetailScreen = ({ route, navigation }) => {
-  const { roomId } = route.params;
+  const roomId = route.params?.roomId;
   const [room, setRoom] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activePhoto, setActivePhoto] = useState(0);
+  const { width } = useWindowDimensions();
+
+  const fetchRoom = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get(`/rooms/${roomId}`);
+      setRoom(res.data?.room ?? null);
+    } catch {
+      setRoom(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchRoom = async () => {
-      try {
-        const res = await api.get(`/rooms/${roomId}`);
-        setRoom(res.data.room);
-      } catch {
-        Alert.alert("Error", "Could not load room details");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchRoom();
+    if (roomId) fetchRoom();
+    else setLoading(false);
   }, [roomId]);
 
-  const openDirections = async () => {
-    const loc = await Location.getCurrentPositionAsync({});
-    const url = `https://www.google.com/maps/dir/?api=1&origin=${loc.coords.latitude},${loc.coords.longitude}&destination=${room.lat},${room.lng}&travelmode=driving`;
-    Linking.openURL(url);
+  // Google Maps uses the device's location as origin when it's omitted, so we
+  // don't need a location permission (or a GPS fix that can throw) here.
+  const openDirections = () => {
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${room.lat},${room.lng}&travelmode=driving`;
+    Linking.openURL(url).catch(() =>
+      Alert.alert("Error", "Could not open Maps"),
+    );
   };
 
   if (loading) {
@@ -62,7 +68,28 @@ const RoomDetailScreen = ({ route, navigation }) => {
     );
   }
 
-  const photos = room.image_url || [];
+  // fetch failed (network blip, room deleted) — previously this crashed on room.image_url
+  if (!room) {
+    return (
+      <View style={styles.center}>
+        <LinearGradient
+          colors={[colors.gradientStart, colors.gradientMid, colors.gradientEnd]}
+          locations={[0, 0.5, 1]}
+          style={StyleSheet.absoluteFillObject}
+        />
+        <Text style={styles.title}>Couldn't load this room</Text>
+        <TouchableOpacity style={styles.bookBtn} onPress={fetchRoom}>
+          <Text style={styles.bookBtnText}>TRY AGAIN</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Text style={styles.backText}>← Back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  const photos = (Array.isArray(room.image_url) ? room.image_url : []).filter(Boolean);
+  const hasCoords = isValidCoord(room.lat, room.lng);
   const coordinate = {
     latitude: parseFloat(room.lat),
     longitude: parseFloat(room.lng),
@@ -100,7 +127,7 @@ const RoomDetailScreen = ({ route, navigation }) => {
                 setActivePhoto(index);
               }}
               renderItem={({ item }) => (
-                <Image source={{ uri: item }} style={styles.photo} />
+                <Image source={{ uri: item }} style={[styles.photo, { width }]} resizeMode="cover" />
               )}
             />
             {photos.length > 1 && (
@@ -161,6 +188,7 @@ const RoomDetailScreen = ({ route, navigation }) => {
         </View>
 
         {/* Map */}
+        {hasCoords && (
         <MapView
           style={styles.map}
           initialRegion={{
@@ -171,6 +199,7 @@ const RoomDetailScreen = ({ route, navigation }) => {
         >
           <Marker coordinate={coordinate} title={room.name} />
         </MapView>
+        )}
 
         {/* Directions button */}
         <TouchableOpacity
@@ -219,7 +248,7 @@ const styles = StyleSheet.create({
 
   /* Photo carousel */
   carouselContainer: { marginBottom: 20 },
-  photo: { width, height: 260, resizeMode: "cover" },
+  photo: { height: 260 },
   dots: {
     flexDirection: "row",
     justifyContent: "center",

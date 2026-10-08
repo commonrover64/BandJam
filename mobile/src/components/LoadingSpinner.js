@@ -5,7 +5,7 @@ import { colors } from "../theme/colors";
 
 const LoadingSpinner = ({ message = "Loading..." }) => (
   <View style={styles.container}>
-    <ActivityIndicator size="large" color={colors.lavender} />
+    <ActivityIndicator size="large" color={colors.primary} />
     <Text style={styles.text}>{message}</Text>
   </View>
 );
@@ -15,7 +15,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: colors.base,
+    backgroundColor: colors.gradientStart,
     gap: 12,
   },
   text: { color: colors.subtext, fontSize: 14 },

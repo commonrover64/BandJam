@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
-  FlatList,
   StyleSheet,
   Alert,
   TouchableOpacity,
@@ -34,55 +33,63 @@ const SearchScreen = () => {
   const [page, setPage] = useState(1);
   const [refreshing, setRefreshing] = useState(false);
 
-  const loadData = useCallback(async (lat, lng) => {
-    await Promise.all([searchRooms(lat, lng), fetchRecentRooms()]);
-  }, []);
+  // Returns coords or null. Never throws: getCurrentPositionAsync rejects
+  // when GPS is switched off, which used to leave the spinner stuck forever.
+  const getCoords = async () => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Permission denied", "Location needed to find nearby rooms");
+        return null;
+      }
+      const loc =
+        (await Location.getLastKnownPositionAsync()) ??
+        (await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        }));
+      return loc?.coords ?? null;
+    } catch {
+      Alert.alert("Location unavailable", "Turn on location services and pull to refresh");
+      return null;
+    }
+  };
+
+  const loadData = async () => {
+    const coords = await getCoords();
+    const tasks = [fetchRecentRooms()];
+    if (coords) tasks.push(searchRooms(coords.latitude, coords.longitude));
+    await Promise.all(tasks);
+  };
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    const loc = await Location.getCurrentPositionAsync({});
-    await loadData(loc.coords.latitude, loc.coords.longitude);
-    setRefreshing(false);
+    try {
+      await loadData();
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   useEffect(() => {
-    const init = async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert(
-          "Permission denied",
-          "Location needed to find nearby rooms",
-        );
-        return;
-      }
-      const loc = await Location.getCurrentPositionAsync({});
-      await Promise.all([
-        searchRooms(loc.coords.latitude, loc.coords.longitude),
-        fetchRecentRooms(),
-      ]);
-    };
-    init();
+    loadData().finally(() => setLoading(false));
   }, []);
 
   const searchRooms = async (lat, lng) => {
     try {
-      setLoading(true);
       const res = await api.get("/rooms/search", {
         params: { lat, lng, radius: 50 },
       });
-      setRooms(res.data.rooms);
+      setRooms(res.data?.rooms ?? []);
       setPage(1);
     } catch {
       Alert.alert("Error", "Could not fetch rooms");
-    } finally {
-      setLoading(false);
     }
   };
 
   const fetchRecentRooms = async () => {
     try {
       const res = await api.get("/bookings/consumer/recent-rooms");
-      setRecentRooms(res.data.rooms);
+      setRecentRooms(res.data?.rooms ?? []);
     } catch {
       // silently fail — not critical
     }
@@ -92,7 +99,7 @@ const SearchScreen = () => {
     navigation.navigate("RoomDetail", { roomId: room.id });
 
   const filtered = rooms.filter((r) =>
-    r.name.toLowerCase().includes(searchQuery.toLowerCase()),
+    (r.name ?? "").toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);

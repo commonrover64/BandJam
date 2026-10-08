@@ -7,21 +7,42 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { Text } from "react-native-paper";
-import DateTimePicker from "@react-native-community/datetimepicker";
+import DateTimePicker, {
+  DateTimePickerAndroid,
+} from "@react-native-community/datetimepicker";
 import { LinearGradient } from "expo-linear-gradient";
 import api from "../../services/api";
 import { colors } from "../../theme/colors";
+import { toLocalDateString } from "../../utils/image";
 
 const BookingScreen = ({ route, navigation }) => {
-  const { room } = route.params;
+  const room = route.params?.room;
   const [date, setDate] = useState(new Date());
   const [showPicker, setShowPicker] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Android: use the imperative API. Conditionally rendering <DateTimePicker>
+  // on Android is the documented cause of the "dialog opens twice" / dismiss crash.
+  const openPicker = () => {
+    if (Platform.OS === "android") {
+      DateTimePickerAndroid.open({
+        value: date,
+        mode: "date",
+        minimumDate: new Date(),
+        onChange: (event, selected) => {
+          if (event.type === "set" && selected) setDate(selected);
+        },
+      });
+    } else {
+      setShowPicker((s) => !s);
+    }
+  };
+
   const handleBooking = async () => {
+    if (!room?.id) return;
     try {
       setLoading(true);
-      const bookingDate = date.toISOString().split("T")[0];
+      const bookingDate = toLocalDateString(date); // toISOString() shifted the day in IST
 
       // just create booking — no payment API call needed
       await api.post("/bookings", {
@@ -91,22 +112,22 @@ const BookingScreen = ({ route, navigation }) => {
           <Text style={styles.fieldLabel}>BOOKING DATE</Text>
           <TouchableOpacity
             style={styles.datePicker}
-            onPress={() => setShowPicker(true)}
+            onPress={openPicker}
             activeOpacity={0.8}
           >
             <Text style={styles.dateText}>{date.toDateString()}</Text>
             <Text style={styles.dateChevron}>›</Text>
           </TouchableOpacity>
 
-          {showPicker && (
+          {Platform.OS === "ios" && showPicker && (
             <DateTimePicker
               value={date}
               mode="date"
               minimumDate={new Date()}
-              display={Platform.OS === "ios" ? "spinner" : "default"}
+              display="inline"
               onChange={(event, selectedDate) => {
-                setShowPicker(false);
                 if (selectedDate) setDate(selectedDate);
+                setShowPicker(false);
               }}
             />
           )}

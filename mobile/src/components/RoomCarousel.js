@@ -10,12 +10,13 @@ import {
 import { Text } from "react-native-paper";
 import { LinearGradient } from "expo-linear-gradient";
 import { colors } from "../theme/colors";
+import { coverImage } from "../utils/image";
 
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = width * 0.72;
 
 const RoomCarousel = ({ rooms, onPress }) => {
-  if (!rooms.length) return null;
+  if (!rooms?.length) return null;
 
   return (
     <ScrollView
@@ -23,19 +24,22 @@ const RoomCarousel = ({ rooms, onPress }) => {
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.scroll}
     >
-      {rooms.map((room) => (
+      {rooms.map((room) => {
+        const cover = coverImage(room.image_url);
+        return (
         <TouchableOpacity
           key={room.id}
           style={styles.card}
           onPress={() => onPress(room)}
           activeOpacity={0.9}
         >
-          {room.image_url ? (
-            <Image source={{ uri: room.image_url }} style={styles.image} />
+          {cover ? (
+            // image_url is an array — passing it straight to `uri` crashes on Android
+            <Image source={{ uri: cover }} style={styles.image} />
           ) : (
             // fallback gradient if no image
             <LinearGradient
-              colors={[colors.mauve, colors.blue]}
+              colors={[colors.gradientStart, colors.gradientMid]}
               style={styles.image}
             />
           )}
@@ -56,7 +60,8 @@ const RoomCarousel = ({ rooms, onPress }) => {
             </View>
           </LinearGradient>
         </TouchableOpacity>
-      ))}
+        );
+      })}
     </ScrollView>
   );
 };
@@ -69,7 +74,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     overflow: "hidden",
     marginRight: 14,
-    backgroundColor: colors.surface0,
+    backgroundColor: colors.cardBg,
   },
   image: { width: "100%", height: "100%", position: "absolute" },
   overlay: {
@@ -97,7 +102,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 8,
   },
-  price: { color: colors.green, fontWeight: "bold", fontSize: 13 },
+  price: { color: colors.white, fontWeight: "bold", fontSize: 13 },
 });
 
 export default RoomCarousel;

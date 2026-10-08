@@ -11,6 +11,7 @@ import { Text, ActivityIndicator, Portal, Modal } from "react-native-paper";
 import { LinearGradient } from "expo-linear-gradient";
 import api from "../../services/api";
 import { colors } from "../../theme/colors";
+import { isValidCoord } from "../../utils/image";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 
 const MyRoomsScreen = () => {
@@ -20,16 +21,19 @@ const MyRoomsScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
   const navigation = useNavigation();
 
-  const fetchRooms = async () => {
+  // Must be memoised: fetchRooms was a new function every render, so
+  // useFocusEffect re-ran -> setRooms -> re-render -> new fetchRooms -> ...
+  // an endless request loop while this tab was focused.
+  const fetchRooms = useCallback(async () => {
     try {
       const res = await api.get("/rooms/owner/me");
-      setRooms(res.data.rooms);
+      setRooms(res.data?.rooms ?? []);
     } catch {
       Alert.alert("Error", "Could not fetch rooms");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -65,15 +69,12 @@ const MyRoomsScreen = () => {
   const handleToggleActive = async (id) => {
     try {
       const res = await api.patch(`/rooms/${id}/toggle-active`);
-      // update local state so UI reflects immediately
+      const isActive = res.data?.room?.is_active;
+      if (typeof isActive !== "boolean") return fetchRooms();
       setRooms((prev) =>
-        prev.map((r) =>
-          r.id === id ? { ...r, is_active: res.data.room.is_active } : r,
-        ),
+        prev.map((r) => (r.id === id ? { ...r, is_active: isActive } : r)),
       );
-      setSelected((prev) =>
-        prev ? { ...prev, is_active: res.data.room.is_active } : null,
-      );
+      setSelected((prev) => (prev ? { ...prev, is_active: isActive } : null));
     } catch {
       Alert.alert("Error", "Could not update room status");
     }
@@ -192,10 +193,12 @@ const MyRoomsScreen = () => {
                 {selected.description && (
                   <ModalRow label="ABOUT" value={selected.description} />
                 )}
+                {isValidCoord(selected.lat, selected.lng) && (
                 <ModalRow
                   label="COORDINATES"
                   value={`${parseFloat(selected.lat).toFixed(4)}, ${parseFloat(selected.lng).toFixed(4)}`}
                 />
+                )}
               </View>
 
               {/* Actions */}

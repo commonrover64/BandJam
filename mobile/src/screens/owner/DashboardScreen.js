@@ -20,21 +20,24 @@ const DashboardScreen = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  const fetchBookings = useCallback(async () => {
+    try {
+      const res = await api.get("/bookings/owner/me");
+      setBookings(res.data?.bookings ?? []);
+    } catch {
+      // keep whatever we had; pull-to-refresh retries
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // previously referenced fetchBookings in the deps array *before* its
+  // `const` declaration (temporal dead zone) — only worked by accident
   useFocusEffect(
     useCallback(() => {
       fetchBookings();
     }, [fetchBookings]),
   );
-
-  const fetchBookings = async () => {
-    try {
-      const res = await api.get("/bookings/owner/me");
-      setBookings(res.data.bookings);
-    } catch {
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const now = new Date();
   const weekStart = new Date(now);
@@ -47,11 +50,11 @@ const DashboardScreen = () => {
 
   const totalEarnings = bookings
     .filter((b) => b.status === "confirmed")
-    .reduce((sum, b) => sum + parseFloat(b.total_amount), 0);
+    .reduce((sum, b) => sum + (parseFloat(b.total_amount) || 0), 0);
 
   const weekEarnings = thisWeek
     .filter((b) => b.status === "confirmed")
-    .reduce((sum, b) => sum + parseFloat(b.total_amount), 0);
+    .reduce((sum, b) => sum + (parseFloat(b.total_amount) || 0), 0);
 
   const statusColor = (status) => {
     if (status === "confirmed") return colors.success;
