@@ -8,18 +8,18 @@ const {
   toggleRoomActive,
 } = require("./rooms.service");
 const { cloudinary } = require("../../config/upload");
+const { sendError } = require("../../utils/httpError");
 
 const create = async (req, res) => {
   try {
-    // image_urls is now a JSON array of cloudinary URLs sent by client
-    const image_url = req.body.image_urls
-      ? JSON.parse(req.body.image_urls)
-      : [];
-
-    const room = await createRoom(req.user.id, { ...req.body, image_url });
+    // image_urls: JSON array of Cloudinary URLs; validated in the service
+    const room = await createRoom(req.user.id, {
+      ...req.body,
+      image_url: req.body.image_urls,
+    });
     res.status(201).json({ success: true, room });
   } catch (err) {
-    res.status(400).json({ success: false, message: err.message });
+    sendError(res, err);
   }
 };
 
@@ -28,23 +28,19 @@ const getOne = async (req, res) => {
     const room = await getRoomById(req.params.id);
     res.status(200).json({ success: true, room });
   } catch (err) {
-    res.status(404).json({ success: false, message: err.message });
+    sendError(res, err, 404);
   }
 };
 
 const update = async (req, res) => {
   try {
-    const newImageUrls = req.body.image_urls
-      ? JSON.parse(req.body.image_urls)
-      : [];
-
     const room = await updateRoom(req.user.id, req.params.id, {
       ...req.body,
-      newImageUrls,
+      newImageUrls: req.body.image_urls,
     });
     res.status(200).json({ success: true, room });
   } catch (err) {
-    res.status(400).json({ success: false, message: err.message });
+    sendError(res, err);
   }
 };
 
@@ -53,7 +49,7 @@ const remove = async (req, res) => {
     const result = await deleteRoom(req.user.id, req.params.id);
     res.status(200).json({ success: true, ...result });
   } catch (err) {
-    res.status(400).json({ success: false, message: err.message });
+    sendError(res, err);
   }
 };
 
@@ -62,7 +58,7 @@ const myRooms = async (req, res) => {
     const rooms = await getOwnerRooms(req.user.id);
     res.status(200).json({ success: true, rooms });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    sendError(res, err, 500);
   }
 };
 
@@ -71,24 +67,30 @@ const search = async (req, res) => {
     // all params come from query string
     const { lat, lng, radius, minPrice, maxPrice, sortBy } = req.query;
 
-    if (!lat || !lng) {
+    const latN = parseFloat(lat);
+    const lngN = parseFloat(lng);
+    if (!Number.isFinite(latN) || !Number.isFinite(lngN) || Math.abs(latN) > 90 || Math.abs(lngN) > 180) {
       return res
         .status(400)
-        .json({ success: false, message: "lat and lng are required" });
+        .json({ success: false, message: "Valid lat and lng are required" });
     }
 
+    // cap radius so one request can't dump the whole table
+    const radiusN = Math.min(Math.max(parseFloat(radius) || 10, 0.1), 100);
+    const num = (v) => (Number.isFinite(parseFloat(v)) ? parseFloat(v) : null);
+
     const rooms = await searchRooms({
-      lat: parseFloat(lat),
-      lng: parseFloat(lng),
-      radius: radius ? parseFloat(radius) : 10,
-      minPrice: minPrice ? parseFloat(minPrice) : null,
-      maxPrice: maxPrice ? parseFloat(maxPrice) : null,
+      lat: latN,
+      lng: lngN,
+      radius: radiusN,
+      minPrice: num(minPrice),
+      maxPrice: num(maxPrice),
       sortBy,
     });
 
     res.status(200).json({ success: true, count: rooms.length, rooms });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    sendError(res, err, 500);
   }
 };
 
@@ -97,7 +99,7 @@ const toggleActive = async (req, res) => {
     const room = await toggleRoomActive(req.user.id, req.params.id);
     res.status(200).json({ success: true, room });
   } catch (err) {
-    res.status(400).json({ success: false, message: err.message });
+    sendError(res, err);
   }
 };
 
@@ -123,7 +125,7 @@ const getUploadSignature = (req, res) => {
       cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    sendError(res, err, 500);
   }
 };
 

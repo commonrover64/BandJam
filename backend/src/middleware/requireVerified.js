@@ -14,7 +14,8 @@ const requireVerified = async (req, res, next) => {
     }
     next();
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error(err);
+    res.status(500).json({ success: false, message: "Something went wrong" });
   }
 };
 

@@ -2,41 +2,48 @@ const pool = require("../src/config/db");
 const fs = require("fs");
 const path = require("path");
 
+// Each migration runs inside a transaction together with its bookkeeping row,
+// so a half-applied migration can't be recorded as done (or vice versa).
+// An advisory lock stops two instances from migrating at the same time.
+const MIGRATION_LOCK_ID = 727274;
+
 const migrate = async () => {
-  // create a migrations tracker table if it doesn't exist
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS migrations (
-      id SERIAL PRIMARY KEY,
-      filename VARCHAR(255) UNIQUE NOT NULL,
-      run_at TIMESTAMP DEFAULT NOW()
-    )
-  `);
+  const client = await pool.connect();
+  try {
+    await client.query("SELECT pg_advisory_lock($1)", [MIGRATION_LOCK_ID]);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS migrations (
+        id SERIAL PRIMARY KEY,
+        filename VARCHAR(255) UNIQUE NOT NULL,
+        run_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
 
-  // get all sql files from migrations folder, sorted
-  const files = fs
-    .readdirSync(path.join(__dirname, "/"))
-    .filter((f) => f.endsWith(".sql"))
-    .sort();
+    const files = fs
+      .readdirSync(__dirname)
+      .filter((f) => f.endsWith(".sql"))
+      .sort();
 
-  for (const file of files) {
-    // check if this migration already ran
-    const { rows } = await pool.query(
-      "SELECT id FROM migrations WHERE filename = $1",
-      [file],
-    );
+    const { rows: done } = await client.query("SELECT filename FROM migrations");
+    const applied = new Set(done.map((r) => r.filename));
 
-    if (rows.length === 0) {
-      // run it
-      const sql = fs.readFileSync(
-        path.join(__dirname, "", file),
-        "utf8",
-      );
-      await pool.query(sql);
-      await pool.query("INSERT INTO migrations (filename) VALUES ($1)", [file]);
-      console.log(`Migration ran: ${file}`);
-    } else {
-      console.log(`Already ran: ${file}`);
+    for (const file of files) {
+      if (applied.has(file)) continue;
+      const sql = fs.readFileSync(path.join(__dirname, file), "utf8");
+      try {
+        await client.query("BEGIN");
+        await client.query(sql);
+        await client.query("INSERT INTO migrations (filename) VALUES ($1)", [file]);
+        await client.query("COMMIT");
+        console.log(`Migration ran: ${file}`);
+      } catch (err) {
+        await client.query("ROLLBACK").catch(() => {});
+        throw new Error(`Migration ${file} failed: ${err.message}`);
+      }
     }
+  } finally {
+    await client.query("SELECT pg_advisory_unlock($1)", [MIGRATION_LOCK_ID]).catch(() => {});
+    client.release();
   }
 };
 

@@ -8,13 +8,14 @@ const {
   declineBooking,
   getRecentlyBookedRooms,
 } = require("./bookings.service");
+const { sendError } = require("../../utils/httpError");
 
 const create = async (req, res) => {
   try {
     const booking = await createBooking(req.user.id, req.body);
     res.status(201).json({ success: true, booking });
   } catch (err) {
-    res.status(400).json({ success: false, message: err.message });
+    sendError(res, err);
   }
 };
 
@@ -23,7 +24,7 @@ const getOne = async (req, res) => {
     const booking = await getBookingById(req.params.id, req.user.id);
     res.status(200).json({ success: true, booking });
   } catch (err) {
-    res.status(404).json({ success: false, message: err.message });
+    sendError(res, err, 404);
   }
 };
 
@@ -32,7 +33,7 @@ const myBookings = async (req, res) => {
     const bookings = await getConsumerBookings(req.user.id);
     res.status(200).json({ success: true, bookings });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    sendError(res, err, 500);
   }
 };
 
@@ -41,7 +42,7 @@ const ownerBookings = async (req, res) => {
     const bookings = await getOwnerBookings(req.user.id);
     res.status(200).json({ success: true, bookings });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    sendError(res, err, 500);
   }
 };
 
@@ -50,7 +51,7 @@ const cancel = async (req, res) => {
     const booking = await cancelBooking(req.user.id, req.params.id);
     res.status(200).json({ success: true, booking });
   } catch (err) {
-    res.status(400).json({ success: false, message: err.message });
+    sendError(res, err);
   }
 };
 
@@ -59,7 +60,7 @@ const recentRooms = async (req, res) => {
     const rooms = await getRecentlyBookedRooms(req.user.id);
     res.status(200).json({ success: true, rooms });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    sendError(res, err, 500);
   }
 };
 
@@ -68,7 +69,7 @@ const approve = async (req, res) => {
     const result = await approveBooking(req.user.id, req.params.id);
     res.status(200).json({ success: true, ...result });
   } catch (err) {
-    res.status(400).json({ success: false, message: err.message });
+    sendError(res, err);
   }
 };
 
@@ -77,7 +78,7 @@ const decline = async (req, res) => {
     const result = await declineBooking(req.user.id, req.params.id);
     res.status(200).json({ success: true, ...result });
   } catch (err) {
-    res.status(400).json({ success: false, message: err.message });
+    sendError(res, err);
   }
 };
 

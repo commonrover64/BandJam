@@ -16,14 +16,14 @@ const requireRole = require("../../middleware/requireRole");
 router.post("/", authenticate, requireRole("consumer"), create);
 router.get("/consumer/me", authenticate, requireRole("consumer"), myBookings);
 router.get("/owner/me", authenticate, requireRole("owner"), ownerBookings);
-router.get("/:id", authenticate, getOne);
-router.patch("/:id/cancel", authenticate, requireRole("consumer"), cancel);
 router.get(
   "/consumer/recent-rooms",
   authenticate,
   requireRole("consumer"),
   recentRooms,
 );
+router.get("/:id", authenticate, getOne);
+router.patch("/:id/cancel", authenticate, requireRole("consumer"), cancel);
 
 router.patch("/:id/approve", authenticate, requireRole("owner"), approve);
 router.patch("/:id/decline", authenticate, requireRole("owner"), decline);
