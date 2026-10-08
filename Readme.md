@@ -24,7 +24,7 @@ The backend follows a module-based structure where each domain (auth, rooms, boo
 The app is fully functional for the core booking flow on Android. iOS support is ready in code but requires an Apple Developer account to build and distribute. Payments currently work on a pay-at-venue model with owner approval via push notifications. A real payment gateway integration is planned once the business is formally registered.
 
 ## Download (Android)
-https://expo.dev/accounts/commonrover/projects/mobile/builds/e5b2b571-53be-4f5f-ad94-b0153f05dafd
+[BandJam](./downloads/BandJam.apk)
 
 ## Credits
 App Logo and color palatte by my brother [@SunnyTamang](https://github.com/SunnyTamang)
